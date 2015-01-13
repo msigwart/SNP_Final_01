@@ -8,6 +8,7 @@ public class Simulation {
 	//Client globals
 	public static final int CLIENT_SEND_INTERVAL 	= 1000; //milliseconds
 	public static final int CLIENT_NUM_OF_PACKETS 	= 10;
+	public static final int NUM_OF_CLIENTS			= 10;
 	
 	//Server globals
 	public static final int SERVER_RUNTIME 			= 20; //seconds
@@ -19,29 +20,19 @@ public class Simulation {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		System.out.printf("Hello Simulator 123\n");
+		System.out.printf("Hello Simulator\n");
+		System.out.printf( "The time is: %s\n", Time.getTimeStampString());
 
-		long t1, t2;
-		t1 = Time.getTimeStamp();
-		System.out.printf( "the time is: %s\n", Time.getTimeStampString());
-		t2 = Time.getTimeStamp();
-		System.out.printf( "MilliSeconds# %d\n", t2-t1 );
 		
 		SendConnection sc = new SendConnection(SERVER_RUNTIME, SERVER_SEND_SPEED);
 		sc.start();
 		
-		int clientId = 0;
-		
-		Client cl = new Client(clientId++, CLIENT_NUM_OF_PACKETS, CLIENT_SEND_INTERVAL);
-		cl.connectToSender(sc);
-		cl.start();
-		
-		/*
-		Client cl[] = new Client[10];
+		int clientId = 0;		
+		Client cl[] = new Client[NUM_OF_CLIENTS];
 		
 		// Creation of clients
 		for (int i=0; i<cl.length; i++) {
-			cl[i] = new Client(clientId++, 10, 1000);
+			cl[i] = new Client(clientId++, CLIENT_NUM_OF_PACKETS, CLIENT_SEND_INTERVAL);
 			cl[i].connectToSender(sc);					//Connect client to send connection
 		}//for
 		
@@ -49,7 +40,7 @@ public class Simulation {
 		for (int i=0; i<cl.length; i++) {
 			cl[i].start();
 		}//for
-		*/
+		
 		
 	}//main
 
