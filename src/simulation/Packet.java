@@ -10,4 +10,7 @@ public class Packet {
 		this.packetId = id++;
 	}//Constructor
 	
+	//getter
+	public int getId() { return packetId; }
+	
 }//Packet
