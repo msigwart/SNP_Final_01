@@ -14,8 +14,8 @@ public class Simulation {
 	public static final int PACKET_SIZE_BITS 			= PACKET_SIZE_BYTES*8;
 	
 	//Client globals
-	public static final int CLIENT_SEND_INTERVAL 		= 1000; //milliseconds
-	public static final int CLIENT_NUM_OF_PACKETS 		= 10;
+	public static final int CLIENT_SEND_INTERVAL 		= 1; //milliseconds
+	public static final int CLIENT_NUM_OF_PACKETS 		= 1000;
 	public static final int NUM_OF_CLIENTS				= 10;
 	
 	//Server globals

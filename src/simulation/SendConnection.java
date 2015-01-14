@@ -2,14 +2,16 @@ package simulation;
 
 public class SendConnection extends Thread {
 	
+	public static final int SERVER_QUEUE_SIZE = 10000;
+	
 	private volatile boolean running = true;
-	private final long runTime;				//run time in second of SendConnection
+	private final long runTime;				//run time in seconds of SendConnection
 	private final int connectionSpeed; 		//in Mbs
 	
 	/**
 	 * Buffer for received packets
 	 */
-	private Packet[] pQueue = new Packet[1000];
+	private Packet[] pQueue = new Packet[SERVER_QUEUE_SIZE];
 	private int enqueueIndex = 0;
 	private int dequeueIndex = 0;
 	
@@ -31,7 +33,7 @@ public class SendConnection extends Thread {
 	 */
 	SendConnection(int runTime, int speed) {
 		super();
-		this.runTime = (long)runTime*1000000000;
+		this.runTime = (long)runTime*Time.NANOSEC_PER_SEC;
 		this.connectionSpeed = speed;
 	}//Constructor
 	
@@ -43,13 +45,22 @@ public class SendConnection extends Thread {
 	// Run method of thread
 	public void run() {
 		if (Thread.currentThread() != this) throw new IllegalStateException();
-		startTime = System.nanoTime();			// Get start time
+		startTime 	= System.nanoTime();			// Get start time
+		currentTime = startTime;
 		System.out.println("SendConnection started...");
 		
+		long newTime;
 		while (running) {
 			//System.out.println("SendConnection: Doing some work.");
-			//running = false;
-			currentTime = System.nanoTime();
+			newTime = System.nanoTime();
+			
+			// It's time to send a packet
+			if ( (newTime - currentTime) >= Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC ) {
+				dequeuePacket();
+			}//if
+			
+			// It's time to terminate SendConnection
+			currentTime = newTime;
 			if (currentTime - startTime >= (runTime)) {
 				running = false;
 			}//if
@@ -88,6 +99,7 @@ public class SendConnection extends Thread {
 		if (pQueue[dequeueIndex] == null) {
 			return false;
 		} else {
+			System.out.printf("SendConnection: Sending packet %d\n", pQueue[dequeueIndex].getId());
 			pQueue[dequeueIndex] = null;
 			dequeueIndex = (dequeueIndex+1)%pQueue.length;
 			return true;
