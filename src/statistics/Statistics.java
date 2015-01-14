@@ -8,8 +8,15 @@ import simulation.Packet;
 public class Statistics {
 	
 	private ArrayList<Event> events = new ArrayList<Event>();
+	private String outputFile;
 	
-	//TODO: Create Constructor
+	/**
+	 * Creates a new Statistics instance for tracing simulation events
+	 * @param outputFile path to output file (simulation trace)
+	 */
+	public Statistics(String outputFile) {
+		this.outputFile = outputFile;
+	}//Constructor
 	
 	
 	/**
