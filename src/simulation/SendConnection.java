@@ -2,6 +2,8 @@ package simulation;
 
 import java.util.Observable;
 
+import statistics.Statistics;
+
 /**
  * SendConnection implements the Runnable interface and contains a Thread object as private member. 
  * It extends Observable (Observer Pattern).
@@ -21,6 +23,8 @@ public class SendConnection extends Observable implements Runnable {
 	// Default values
 	public static final int DEFAULT_QUEUE_NONPRIO_SIZE 	= 10000;
 	public static final int DEFAULT_QUEUE_PRIO_SIZE 	= 10000;
+	public static final int DEFAULT_RUN_TIME			= 10;//seconds
+	public static final int DEFAULT_CONNECTION_SPEED	= 10;//Mbs
 	
 	//Server events
 	public static final int SERVER_EVENT_TERMINATED 	= 1;
@@ -30,27 +34,28 @@ public class SendConnection extends Observable implements Runnable {
 // Private Members
 	
 	//Thread variables
-	private final Thread thread = new Thread(this);
-	private volatile boolean running = true;
+	private final 		Thread 		thread 	= new Thread(this);
+	private volatile 	boolean 	running = true;
 	
 	/**
 	 * Priority buffer for received packets from priority clients
 	 */
-	private Packet[] queuePrio;
-	volatile int inIndexPrio = 0;
-	private volatile int outIndexPrio = 0;
+	private 			Packet[] 	queuePrio;
+	private volatile 	int 		inIndexPrio = 0;
+	private volatile 	int 		outIndexPrio = 0;
 	
 	/**
 	 * Buffer for received packets from non-priority clients
 	 */
-	private Packet[] queueNonPrio;
-	volatile int inIndexNonPrio = 0;
-	private volatile int outIndexNonPrio = 0;
+	private 			Packet[] 	queueNonPrio;
+	private volatile 	int 		inIndexNonPrio = 0;
+	private volatile 	int 		outIndexNonPrio = 0;
 	
 	/**
 	 * Connection speed in Mbs
 	 */
-	private final int connectionSpeed; 		//in Mbs
+	private final 		int 		connectionSpeed; 		//in Mbs
+	private final 		Statistics 	stats;
 
 	
 	//Time variables
@@ -68,10 +73,8 @@ public class SendConnection extends Observable implements Runnable {
 	 *  - Run time set to 10 s.<br>
 	 *  - Connection speed set to 10 Mbs.<br>
 	 */	
-	SendConnection() {
-		this.runTime = 10;
-		this.connectionSpeed = 10;
-		this.queueNonPrio = new Packet[DEFAULT_QUEUE_NONPRIO_SIZE];
+	SendConnection(Statistics stats) {
+		this(DEFAULT_RUN_TIME, DEFAULT_CONNECTION_SPEED, DEFAULT_QUEUE_NONPRIO_SIZE, stats);
 	}//Constructor
 	
 	/**
@@ -79,10 +82,11 @@ public class SendConnection extends Observable implements Runnable {
 	 * @param runTime connection run time in sec after number of seconds it will terminate
 	 * @param speed connection speed in Mbs
 	 */
-	SendConnection(int runTime, int speed, int queueSize) {
+	SendConnection(int runTime, int speed, int queueSize, Statistics stats) {
 		this.runTime = (long)runTime*Time.NANOSEC_PER_SEC;
 		this.connectionSpeed = speed;
 		this.queueNonPrio = new Packet[queueSize];
+		this.stats = stats;
 	}//Constructor
 
 	
