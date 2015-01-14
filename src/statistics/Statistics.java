@@ -1,5 +1,7 @@
 package statistics;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.*;
 import java.nio.file.Files;
 
@@ -45,22 +47,28 @@ public class Statistics {
 	}//writeEventIntoFile
 	
 	
-	public void readEventsFromFile() throws IOException{
-		File file = new File("statsTest.txt");
+	public void readEventsFromFile(){
+		File file = new File(outputFile);
 		FileInputStream fis = null;
- 
+		BufferedReader reader = null;
+		
 		try {
 			fis = new FileInputStream(file);
- 
+			reader = new BufferedReader(new InputStreamReader(fis));
+			
 			System.out.println("Total file size to read (in bytes) : "
 					+ fis.available());
- 
-			int content;
-			while ((content = fis.read()) != -1) {
-				// convert to char and display it
-				System.out.print((char) content);
+			
+			String line = reader.readLine();
+			
+			while(line != null){
+				System.out.println(line);
+				this.addEventFromString(line);
+				line = reader.readLine();
 			}//while
- 
+			
+		} catch (FileNotFoundException ex) {
+            ex.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -73,5 +81,21 @@ public class Statistics {
 		}//finally
 	}//readEventsFromFile
 	
+	public void addEventFromString(String strEvent){
+		//strEvent.split(" ");
+		
+		String []newDigits = (strEvent.replaceAll("[^0-9. ]", "")).split(" ",-1); //removes non numeric chars and slipts the String 
+		ArrayList <String> parts = new ArrayList<String>();
+		
+		for(int i = 0; i < newDigits.length; i++){
+			if(!newDigits[i].isEmpty()) // if the string is not empty adds a new digit to the array of parts
+				parts.add(newDigits[i]);
+		}//for
+		
+		for(int i = 0; i < parts.size(); i++){
+			System.out.println(parts.get(i));
+		}//for
+		
+	}
 	
 }//Statistics
