@@ -1,4 +1,4 @@
-DQUEUE(123): Packet 1
-ENQUEUE(456): Packet 2
-DQUEUE(789): Packet 3
-ENQUEUE(012): Packet 4
+DQUEUE(123): Packet 1 - Priority true
+ENQUEUE(456): Packet 2 - Priority false
+DQUEUE(789): Packet 3 - Priority false
+ENQUEUE(012): Packet 4 - Priority true

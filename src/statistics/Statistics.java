@@ -1,5 +1,6 @@
 package statistics;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.*;
@@ -93,6 +94,7 @@ public class Statistics {
 		Event event = null;
 		Packet packet = null;
 		int eventType;
+		boolean packetPriority;
 		
 		if(strEvent.substring(0, strEvent.indexOf('(')).equalsIgnoreCase("DQUEUE")){
 			eventType = 1;
@@ -100,6 +102,16 @@ public class Statistics {
 		else{
 			eventType = 0;
 		}//else
+		
+		boolean found = Arrays.asList(strEvent.split(" ")).contains("true"); 
+		
+		if(found){
+			packetPriority = true;
+		}
+		else{
+			packetPriority = false;
+		}
+		
 		
 		String []newDigits = (strEvent.replaceAll("[^0-9. ]", "")).split(" ",-1); //removes non numeric chars and slipts the String 
 		ArrayList <String> parts = new ArrayList<String>();
@@ -109,7 +121,7 @@ public class Statistics {
 				parts.add(newDigits[i]);
 		}//for
 
-		return new Event(eventType, Integer.parseInt(parts.get(0)), new Packet(Integer.parseInt(parts.get(1))));
+		return new Event(eventType, Integer.parseInt(parts.get(0)), new Packet(Integer.parseInt(parts.get(1)), packetPriority));
 		
 	}//addEventFromString
 	
