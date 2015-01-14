@@ -12,8 +12,8 @@ public class SendConnection extends Thread {
 	 * Buffer for received packets
 	 */
 	private Packet[] pQueue = new Packet[SERVER_QUEUE_SIZE];
-	private int enqueueIndex = 0;
-	private int dequeueIndex = 0;
+	private volatile int enqueueIndex = 0;
+	private volatile int dequeueIndex = 0;
 	
 	
 	private long startTime;
@@ -55,12 +55,12 @@ public class SendConnection extends Thread {
 			newTime = System.nanoTime();
 			
 			// It's time to send a packet
-			if ( (newTime - currentTime) >= Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC ) {
+			if ( (newTime - currentTime) >= (Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC) ) {
 				dequeuePacket();
+				currentTime = newTime;
 			}//if
 			
 			// It's time to terminate SendConnection
-			currentTime = newTime;
 			if (currentTime - startTime >= (runTime)) {
 				running = false;
 			}//if
