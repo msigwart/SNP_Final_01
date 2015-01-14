@@ -97,10 +97,10 @@ public class Statistics {
 		boolean packetPriority;
 		
 		if(strEvent.substring(0, strEvent.indexOf('(')).equalsIgnoreCase("DQUEUE")){
-			eventType = 1;
+			eventType = Event.EVENT_TYPE_DQUEUE;
 		}//if
 		else{
-			eventType = 0;
+			eventType = Event.EVENT_TYPE_ENQUEUE;
 		}//else
 		
 		boolean found = Arrays.asList(strEvent.split(" ")).contains("true"); 
@@ -110,7 +110,7 @@ public class Statistics {
 		}
 		else{
 			packetPriority = false;
-		}
+		}//if
 		
 		
 		String []newDigits = (strEvent.replaceAll("[^0-9. ]", "")).split(" ",-1); //removes non numeric chars and slipts the String 
@@ -121,7 +121,7 @@ public class Statistics {
 				parts.add(newDigits[i]);
 		}//for
 
-		return new Event(eventType, Integer.parseInt(parts.get(0)), new Packet(Integer.parseInt(parts.get(1)), packetPriority));
+		return new Event( eventType, Long.parseLong(parts.get(0)), new Packet( Integer.parseInt(parts.get(1)), packetPriority ) );
 		
 	}//addEventFromString
 	
