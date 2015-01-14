@@ -16,11 +16,23 @@ public class SendConnection extends Observable implements Runnable {
 	
 	
 	/**
-	 * Buffer for received packets
+	 * Priority buffer for received packets from priority clients
 	 */
-	private Packet[] pQueue;
-	volatile int enqueueIndex = 0;
-	private volatile int dequeueIndex = 0;
+	private Packet[] queuePrio;
+	volatile int inIndexPrio = 0;
+	private volatile int outIndexPrio = 0;
+	
+	/**
+	 * Buffer for received packets from non-priority clients
+	 */
+	private Packet[] queueNonPrio;
+	volatile int inIndexNonPrio = 0;
+	private volatile int outIndexNonPrio = 0;
+	
+	
+	/**
+	 * Connection speed in Mbs
+	 */
 	private final int connectionSpeed; 		//in Mbs
 
 	
@@ -36,7 +48,7 @@ public class SendConnection extends Observable implements Runnable {
 	SendConnection() {
 		this.runTime = 10;
 		this.connectionSpeed = 10;
-		this.pQueue = new Packet[DEFAULT_QUEUE_SIZE];
+		this.queueNonPrio = new Packet[DEFAULT_QUEUE_SIZE];
 	}//Constructor
 	
 	
@@ -49,7 +61,7 @@ public class SendConnection extends Observable implements Runnable {
 	SendConnection(int runTime, int speed, int queueSize) {
 		this.runTime = (long)runTime*Time.NANOSEC_PER_SEC;
 		this.connectionSpeed = speed;
-		this.pQueue = new Packet[queueSize];
+		this.queueNonPrio = new Packet[queueSize];
 	}//Constructor
 	
 	
@@ -101,9 +113,9 @@ public class SendConnection extends Observable implements Runnable {
 	 * 		   false if a packet could not be enqueued --> Queue full?
 	 */
 	public synchronized boolean enqueuePacket(Packet packet) {
-		if (pQueue[enqueueIndex] == null) {
-			pQueue[enqueueIndex] = packet;
-			enqueueIndex = (enqueueIndex+1)%pQueue.length;
+		if (queueNonPrio[inIndexNonPrio] == null) {
+			queueNonPrio[inIndexNonPrio] = packet;
+			inIndexNonPrio = (inIndexNonPrio+1)%queueNonPrio.length;
 			System.out.printf("SendConnection: received packet %d\n", packet.getId());
 			return true;
 		} else {
@@ -119,12 +131,12 @@ public class SendConnection extends Observable implements Runnable {
 	 * 		   false if no packet is in line
 	 */
 	private synchronized boolean dequeuePacket() {
-		if (pQueue[dequeueIndex] == null) {
+		if (queueNonPrio[outIndexNonPrio] == null) {
 			return false;
 		} else {
-			System.out.printf("SendConnection: Sending packet %d\n", pQueue[dequeueIndex].getId());
-			pQueue[dequeueIndex] = null;
-			dequeueIndex = (dequeueIndex+1)%pQueue.length;
+			System.out.printf("SendConnection: Sending packet %d\n", queueNonPrio[outIndexNonPrio].getId());
+			queueNonPrio[outIndexNonPrio] = null;
+			outIndexNonPrio = (outIndexNonPrio+1)%queueNonPrio.length;
 			return true;
 		}//if
 	}//dequeuePacket
