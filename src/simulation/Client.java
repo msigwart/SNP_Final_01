@@ -46,7 +46,13 @@ public class Client extends Thread implements Observer {
 	}//connectToSender
 	
 	
-	
+	/**
+	 * Run Method for client:<br>
+	 * 1. Wait for connection to SendConnection<br>
+	 * 2. Send number of packets<br>
+	 * 3. Delete this from list of Observers<br>
+	 * 4. Terminate<br>
+	 */
 	public void run() {
 		if (Thread.currentThread() != this) throw new IllegalStateException();
 		System.out.printf("Client %d started...\n", this.clientId);
