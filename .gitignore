@@ -5,6 +5,7 @@
 
 # output file
 output/
+statTest.txt
 
 # Package Files #
 *.jar
