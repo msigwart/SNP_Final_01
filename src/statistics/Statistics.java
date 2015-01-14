@@ -34,24 +34,12 @@ public class Statistics {
 	
 	public void writeEventIntoFile(Event event){
 		try {
-            //Whatever the file path is.
 			System.out.println("trying to write in the file statsTest.txt");
             File statText = new File(outputFile);
-            //FileOutputStream is = new FileOutputStream(statText);
-            //OutputStreamWriter osw = new OutputStreamWriter(is);    
-            //Writer w = new BufferedWriter(osw);
-            //w.append(event.toString());
-            //w.close();
-            
-            
-          //true = append file
     		FileWriter fileWritter = new FileWriter(statText.getName(),true);
 	        BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
 	        bufferWritter.write(event.toString() + "\n");
 	        bufferWritter.close();
-            
-            
-            
         } catch (IOException e) {
             System.err.println("Problem writing to the file statsTest.txt");
         }//catch
