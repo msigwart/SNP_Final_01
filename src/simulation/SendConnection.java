@@ -1,12 +1,19 @@
 package simulation;
 
-public class SendConnection extends Thread {
+import java.util.Observable;
+
+public class SendConnection extends Observable implements Runnable {
 	
+	//Globals
 	public static final int DEFAULT_QUEUE_SIZE = 10000;
+	//Server events
+	public static final int SERVER_EVENT_TERMINATED = 1;
 	
+	
+	//Thread variables
+	private final Thread thread = new Thread(this);
 	private volatile boolean running = true;
-	private final long runTime;				//run time in seconds of SendConnection
-	private final int connectionSpeed; 		//in Mbs
+	
 	
 	/**
 	 * Buffer for received packets
@@ -14,18 +21,25 @@ public class SendConnection extends Thread {
 	private Packet[] pQueue;
 	volatile int enqueueIndex = 0;
 	private volatile int dequeueIndex = 0;
+	private final int connectionSpeed; 		//in Mbs
+
 	
-	
+	//Time variables
+	private final long runTime;				//run time in seconds of SendConnection
 	private long startTime;
 	private long currentTime;
 	
+	
+	
+	
 	/* Constructors */	
 	SendConnection() {
-		super();
 		this.runTime = 10;
 		this.connectionSpeed = 10;
 		this.pQueue = new Packet[DEFAULT_QUEUE_SIZE];
 	}//Constructor
+	
+	
 	
 	/**
 	 * Creates a new SendConnection
@@ -33,20 +47,26 @@ public class SendConnection extends Thread {
 	 * @param speed connection speed in Mbs
 	 */
 	SendConnection(int runTime, int speed, int queueSize) {
-		super();
 		this.runTime = (long)runTime*Time.NANOSEC_PER_SEC;
 		this.connectionSpeed = speed;
 		this.pQueue = new Packet[queueSize];
 	}//Constructor
 	
 	
+	/**
+	 * Delegate for thread start
+	 */
+	public void start() {
+		this.thread.start();
+	}//start
 	
 	// Method to terminate thread
 	public void terminate() { running = false; }
 	
+	
 	// Run method of thread
 	public void run() {
-		if (Thread.currentThread() != this) throw new IllegalStateException();
+		if (thread == null || Thread.currentThread() != thread) throw new IllegalStateException();
 		startTime 	= System.nanoTime();			// Get start time
 		currentTime = startTime;
 		System.out.println("SendConnection started...");
@@ -65,6 +85,7 @@ public class SendConnection extends Thread {
 			// It's time to terminate SendConnection
 			if (currentTime - startTime >= (runTime)) {
 				running = false;
+				tellObservers(SERVER_EVENT_TERMINATED);
 			}//if
 		}//while
 		
@@ -107,6 +128,13 @@ public class SendConnection extends Thread {
 			return true;
 		}//if
 	}//dequeuePacket
+	
+	
+	//Tells connected clients about state changes --> OBSERVER PATTERN
+	public void tellObservers(int event) {
+		setChanged();
+		notifyObservers(event);
+	}//tellObservers
 	
 	
 }//SendConnection

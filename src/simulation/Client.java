@@ -1,6 +1,10 @@
 package simulation;
 
-public class Client extends Thread {
+import java.util.Observable;
+import java.util.Observer;
+
+
+public class Client extends Thread implements Observer {
 
 	private volatile boolean running = true;
 	private volatile SendConnection sendConnection = null;
@@ -33,6 +37,7 @@ public class Client extends Thread {
 	
 	public void connectToSender(SendConnection sender) {
 		this.sendConnection = sender;
+		sendConnection.addObserver(this);
 	}//connectToSender
 	
 	
@@ -50,10 +55,11 @@ public class Client extends Thread {
 				
 				int packetCounter = 0;
 				long newTime;
-				while (packetCounter<numOfPackets) {	//send number of Packets
+				
+				while (packetCounter<numOfPackets && running == true) {	//send number of Packets
 					newTime = System.nanoTime();	//get currentTime
-					if ( (newTime - currentTime) >= (interval*Time.NANOSEC_PER_MICROSEC) ) {	//TODO --> Check for long repetition
-						
+					
+					if ( (newTime - currentTime) >= (interval*Time.NANOSEC_PER_MICROSEC) ) {	//TODO --> Check for long repetition	
 						Packet packet = new Packet();
 						//System.out.printf("Client %d: Created Packet: ID %d at time\n", this.clientId, packet.getId());
 						if ( !sendConnection.enqueuePacket(packet) ){
@@ -65,13 +71,32 @@ public class Client extends Thread {
 						currentTime = newTime;
 					} else if (newTime < currentTime) {
 						currentTime = newTime;
+						
 					}//if
+					
 				}//while
 				running = false;
 			}//if
 			
 		}//while
-		System.out.printf("Client %d terminated.\n", this.clientId);
+		this.sendConnection.deleteObserver(this);
+		this.sendConnection = null;
+		System.out.printf("Client %d: terminated.\n", this.clientId);
 	}//run
+
+
+	@Override
+	public void update(Observable o, Object arg) {
+		switch ((int)arg) {
+			case SendConnection.SERVER_EVENT_TERMINATED:
+				System.out.printf("Client %d: Lost connection to SendConnection, terminating...\n", this.clientId);
+				running = false;
+				sendConnection.deleteObserver(this);
+				break;
+			default:
+				break;
+		}//switch
+			
+	}//update
 	
 }//Client
