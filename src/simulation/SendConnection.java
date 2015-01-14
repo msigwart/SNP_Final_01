@@ -2,6 +2,7 @@ package simulation;
 
 import java.util.Observable;
 
+import statistics.Event;
 import statistics.Statistics;
 
 /**
@@ -138,6 +139,7 @@ public class SendConnection extends Observable implements Runnable {
 		}//while
 		
 		System.out.println("SendConnection has terminated...");
+		stats.readEventsFromFile();
 	}//run
 
 	
@@ -152,6 +154,7 @@ public class SendConnection extends Observable implements Runnable {
 	 */
 	public synchronized boolean enqueuePacket(Packet packet) {
 		if (queueNonPrio[inIndexNonPrio] == null) {
+			stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);			// trigger enqueue event for statistics
 			queueNonPrio[inIndexNonPrio] = packet;
 			inIndexNonPrio = (inIndexNonPrio+1)%queueNonPrio.length;
 			System.out.printf("SendConnection: received packet %d\n", packet.getId());
@@ -172,6 +175,7 @@ public class SendConnection extends Observable implements Runnable {
 		if (queueNonPrio[outIndexNonPrio] == null) {
 			return false;
 		} else {
+			stats.triggerEvent(Event.EVENT_TYPE_DQUEUE, queueNonPrio[outIndexNonPrio]);	//trigger dequeue event for statistics
 			System.out.printf("SendConnection: Sending packet %d\n", queueNonPrio[outIndexNonPrio].getId());
 			queueNonPrio[outIndexNonPrio] = null;
 			outIndexNonPrio = (outIndexNonPrio+1)%queueNonPrio.length;
