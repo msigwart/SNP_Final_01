@@ -12,6 +12,7 @@ public class Statistics {
 	
 	private ArrayList<Event> events = new ArrayList<Event>();
 	private String outputFile;
+	private int numFiles;
 	
 	/**
 	 * Creates a new Statistics instance for tracing simulation events
@@ -19,6 +20,7 @@ public class Statistics {
 	 */
 	public Statistics(String outputFile) {
 		this.outputFile = outputFile;
+		this.numFiles = this.readNumOfFiles();
 	}//Constructor
 	
 	
@@ -33,10 +35,17 @@ public class Statistics {
 	
 	
 	public void writeEventIntoFile(Event event){
+		
 		try {
 			System.out.println("trying to write in the file statsTest.txt");
-            File statText = new File(outputFile);
-    		FileWriter fileWritter = new FileWriter(statText.getName(),true);
+			String newFileName = outputFile + "_" + numFiles + ".txt";
+			File statText = new File(newFileName);
+			
+            if(!statText.exists()) {
+            	statText.createNewFile();
+            }
+            
+    		FileWriter fileWritter = new FileWriter(newFileName,true);
 	        BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
 	        bufferWritter.write(event.toString() + "\n");
 	        bufferWritter.close();
@@ -47,7 +56,8 @@ public class Statistics {
 	
 	
 	public void readEventsFromFile(){
-		File file = new File(outputFile);
+		String newFileName = outputFile + "_" + numFiles + ".txt";
+		File file = new File(newFileName);
 		FileInputStream fis = null;
 		BufferedReader reader = null;
 		
@@ -123,6 +133,8 @@ public class Statistics {
 		
 	}//addEventFromString
 	
-	
+	private int readNumOfFiles(){
+		return new File("output/").listFiles().length;
+	}
 	
 }//Statistics
