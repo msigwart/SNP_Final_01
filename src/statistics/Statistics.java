@@ -1,7 +1,9 @@
-package simulation;
+package statistics;
 import java.util.ArrayList;
 import java.io.*;
 import java.nio.file.Files;
+
+import simulation.Packet;
 
 public class Statistics {
 	

@@ -1,4 +1,6 @@
-package simulation;
+package statistics;
+
+import simulation.Packet;
 
 public class Event {
 	
