@@ -96,6 +96,7 @@ public class Statistics {
 			System.out.println(parts.get(i));
 		}//for
 		
+		
 	}
 	
 }//Statistics
