@@ -44,11 +44,7 @@ public class Client extends Thread implements Observer {
 	 * @param interval the interval in milliseconds at which rate packets are sent
 	 */
 	Client(int id, int numPackets, int interval) {
-		super();
-		this.clientId 		= id;
-		this.numOfPackets 	= numPackets;
-		this.interval 		= interval;
-		this.priority 		= false;
+		this(id, numPackets, interval, false);
 	}//Constructor
 	
 	
