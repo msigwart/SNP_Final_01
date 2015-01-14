@@ -52,16 +52,18 @@ public class Client extends Thread {
 				long newTime;
 				while (packetCounter<numOfPackets) {	//send number of Packets
 					newTime = System.nanoTime();	//get currentTime
-					if (newTime - currentTime >= interval*Time.NANOSEC_PER_MICROSEC) {	//TODO --> Check for long repetition
+					if ( (newTime - currentTime) >= (interval*Time.NANOSEC_PER_MICROSEC) ) {	//TODO --> Check for long repetition
 						
 						Packet packet = new Packet();
-						System.out.printf("Client %d: Created Packet: ID %d\n", this.clientId, packet.getId());
+						System.out.printf("Client %d: Created Packet: ID %d at time\n", this.clientId, packet.getId());
 						if ( !sendConnection.enqueuePacket(packet) ){
 							System.out.printf("-------> Client %d: Lost packet %d\n", this.clientId, packet.getId());
 						} else {
-							//System.out.printf("Client %d: Sent packet %d\n", this.clientId, packet.getId());
+							System.out.printf("Client %d: Sent packet %d\n", this.clientId, packet.getId());
 						}//if
 						packetCounter += 1;
+						currentTime = newTime;
+					} else if (newTime < currentTime) {
 						currentTime = newTime;
 					}//if
 				}//while
