@@ -1,5 +1,6 @@
 package statistics;
 
+import simulation.Client;
 import simulation.Packet;
 
 public class Event {
@@ -22,11 +23,16 @@ public class Event {
 	 * @param packet the packet the event occurred with
 	 */
 	Event(int eventType, Packet packet){
-		this.eventType= eventType;
+		this.eventType = eventType;
 		this.packet = packet;
 		this.creationTime = System.nanoTime();
 	}//Constructor
 	
+	Event(int eventType, int creationTime, Packet packet){
+		this.eventType = eventType;
+		this.creationTime = creationTime;
+		this.packet = packet;
+	}//Constructor
 	
 	/* Getters and Setters */
 	public Packet getPacket(){
@@ -45,9 +51,9 @@ public class Event {
 	@Override
 	public String toString(){
 		if(eventType == EVENT_TYPE_DQUEUE)
-			return "DQUEUE: " + "Packet " + packet.getId();
+			return "DQUEUE at (" + creationTime + "): " + "Packet " + packet.getId();
 		else{
-			return "ENQUEUE: "  + "Packet " + packet.getId();
+			return "ENQUEUE at (" + creationTime + "): " + "Packet " + packet.getId();
 		}//if	
 	}//toString
 	
