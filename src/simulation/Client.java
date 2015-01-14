@@ -14,10 +14,10 @@ public class Client extends Thread implements Observer {
 	private volatile boolean running = true;
 	private volatile SendConnection sendConnection = null;
 	
-	private final int clientId;			//Client ID
-	private final int numOfPackets;		//The number of packets sent by client
-	private final int interval;			//Interval at which packets are sent in microseconds
-	
+	private final int 		clientId;			//Client ID
+	private final int 		numOfPackets;		//The number of packets sent by client
+	private final int 		interval;			//Interval at which packets are sent in microseconds
+	private final boolean 	priority;
 	
 	private long startTime;
 	private long currentTime;
@@ -27,13 +27,31 @@ public class Client extends Thread implements Observer {
 	 * @param id the client ID
 	 * @param numPackets the number of packets the client will send
 	 * @param interval the interval in milliseconds at which rate packets are sent
+	 * @param priority true if Client is a priority client
+	 */
+	Client(int id, int numPackets, int interval, boolean priority) {
+		super();
+		this.clientId 		= id;
+		this.numOfPackets 	= numPackets;
+		this.interval 		= interval;
+		this.priority 		= priority;
+	}//Constructor
+	
+	/**
+	 * Creates a new client
+	 * @param id the client ID
+	 * @param numPackets the number of packets the client will send
+	 * @param interval the interval in milliseconds at which rate packets are sent
 	 */
 	Client(int id, int numPackets, int interval) {
 		super();
-		this.clientId = id;
-		this.numOfPackets = numPackets;
-		this.interval = interval;
+		this.clientId 		= id;
+		this.numOfPackets 	= numPackets;
+		this.interval 		= interval;
+		this.priority 		= false;
 	}//Constructor
+	
+	
 	
 	
 	// Getter for client ID
