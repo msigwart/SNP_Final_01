@@ -39,7 +39,7 @@ public class Statistics {
             FileOutputStream is = new FileOutputStream(statText);
             OutputStreamWriter osw = new OutputStreamWriter(is);    
             Writer w = new BufferedWriter(osw);
-            w.write(event.toString());
+            w.append(event.toString());
             w.close();
         } catch (IOException e) {
             System.err.println("Problem writing to the file statsTest.txt");
@@ -62,11 +62,16 @@ public class Statistics {
 			String line = reader.readLine();
 			
 			while(line != null){
-				System.out.println(line);
 				Event e = this.createEventFromString(line);
+				
 				if (e == null) {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
+				else{
+					System.out.printf("Reading event....\n");
+					System.out.println(e.toString());
+				}//else
+				
 				line = reader.readLine();
 			}//while
 			
@@ -85,8 +90,16 @@ public class Statistics {
 	}//readEventsFromFile
 	
 	public Event createEventFromString(String strEvent){
-		//strEvent.split(" ");
 		Event event = null;
+		Packet packet = null;
+		int eventType;
+		
+		if(strEvent.substring(0, strEvent.indexOf('(')).equalsIgnoreCase("DQUEUE")){
+			eventType = 1;
+		}//if
+		else{
+			eventType = 0;
+		}//else
 		
 		String []newDigits = (strEvent.replaceAll("[^0-9. ]", "")).split(" ",-1); //removes non numeric chars and slipts the String 
 		ArrayList <String> parts = new ArrayList<String>();
@@ -95,13 +108,11 @@ public class Statistics {
 			if(!newDigits[i].isEmpty()) // if the string is not empty adds a new digit to the array of parts
 				parts.add(newDigits[i]);
 		}//for
-		
-		for(int i = 0; i < parts.size(); i++){
-			System.out.println(parts.get(i));
-		}//for
-		
-		return event;
+
+		return new Event(eventType, Integer.parseInt(parts.get(0)), new Packet(Integer.parseInt(parts.get(1))));
 		
 	}//addEventFromString
+	
+	
 	
 }//Statistics
