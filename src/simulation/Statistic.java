@@ -1,12 +1,7 @@
 package simulation;
 import java.util.ArrayList;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
+import java.nio.file.Files;
 
 public class Statistic {
 	
@@ -29,5 +24,33 @@ public class Statistic {
         } catch (IOException e) {
             System.err.println("Problem writing to the file statsTest.txt");
         }
+	}
+	
+	public void readEventsFromFile() throws IOException{
+		File file = new File("statsTest.txt");
+		FileInputStream fis = null;
+ 
+		try {
+			fis = new FileInputStream(file);
+ 
+			System.out.println("Total file size to read (in bytes) : "
+					+ fis.available());
+ 
+			int content;
+			while ((content = fis.read()) != -1) {
+				// convert to char and display it
+				System.out.print((char) content);
+			}
+ 
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (fis != null)
+					fis.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
 	}
 }
