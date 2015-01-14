@@ -2,6 +2,16 @@ package simulation;
 
 import java.util.Observable;
 
+/**
+ * SendConnection implements the Runnable interface and contains a Thread object as private member. 
+ * It extends Observable (Observer Pattern).
+ * This class represents a sending (outgoing) connection. In the simulation it represents the router.
+ * Multiple clients (Class Client) can connect to the router and send packets to it.
+ * It contains queues for priority as well as non priority packets.
+ * The packets are "sent" on the outgoing connection on a set speed (in Mbs).
+ * @author Marten Sigwart
+ *
+ */
 public class SendConnection extends Observable implements Runnable {
 	
 
