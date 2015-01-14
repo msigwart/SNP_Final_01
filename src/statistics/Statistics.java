@@ -35,7 +35,7 @@ public class Statistics {
 		try {
             //Whatever the file path is.
 			System.out.println("trying to write in the file statsTest.txt");
-            File statText = new File("statsTest.txt");
+            File statText = new File(outputFile);
             FileOutputStream is = new FileOutputStream(statText);
             OutputStreamWriter osw = new OutputStreamWriter(is);    
             Writer w = new BufferedWriter(osw);
@@ -63,7 +63,10 @@ public class Statistics {
 			
 			while(line != null){
 				System.out.println(line);
-				this.addEventFromString(line);
+				Event e = this.createEventFromString(line);
+				if (e == null) {
+					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
+				}//if
 				line = reader.readLine();
 			}//while
 			
@@ -81,8 +84,9 @@ public class Statistics {
 		}//finally
 	}//readEventsFromFile
 	
-	public void addEventFromString(String strEvent){
+	public Event createEventFromString(String strEvent){
 		//strEvent.split(" ");
+		Event event = null;
 		
 		String []newDigits = (strEvent.replaceAll("[^0-9. ]", "")).split(" ",-1); //removes non numeric chars and slipts the String 
 		ArrayList <String> parts = new ArrayList<String>();
@@ -96,7 +100,8 @@ public class Statistics {
 			System.out.println(parts.get(i));
 		}//for
 		
+		return event;
 		
-	}
+	}//addEventFromString
 	
 }//Statistics
