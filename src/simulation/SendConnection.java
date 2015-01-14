@@ -10,7 +10,8 @@ public class SendConnection extends Thread {
 	 * Buffer for received packets
 	 */
 	private Packet[] pQueue = new Packet[1000];
-	private int queueIndex = 0;
+	private int enqueueIndex = 0;
+	private int dequeueIndex = 0;
 	
 	private long startTime;
 	private long currentTime;
@@ -60,13 +61,35 @@ public class SendConnection extends Thread {
 	/**
 	 * This method enqueues a packet into the packet queue
 	 * @param packet the packet to be enqueued
+	 * @return true if a packet is successfully received
+	 * 		   false if a packet could not be enqueued --> Queue full?
 	 */
-	public synchronized void enqueuePacket(Packet packet) {
-		if (queueIndex < pQueue.length) {
-			pQueue[queueIndex++] = packet;
+	public synchronized boolean enqueuePacket(Packet packet) {
+		if (pQueue[enqueueIndex] == null) {
+			pQueue[enqueueIndex] = packet;
+			enqueueIndex = (enqueueIndex+1)%pQueue.length;
 			System.out.printf("SendConnection: received packet %d\n", packet.getId());
+			return true;
+		} else {
+			return false;
 		}//if
 	}//enqueuePacket
+	
+	
+	/**
+	 * This method dequeues the packet first in line in the packet queue
+	 * @return true if a packet is successfully dequeued
+	 * 		   false if no packet is in line
+	 */
+	private synchronized boolean dequeuePacket() {
+		if (pQueue[dequeueIndex] == null) {
+			return false;
+		} else {
+			pQueue[dequeueIndex] = null;
+			dequeueIndex = (dequeueIndex+1)%pQueue.length;
+			return true;
+		}//if
+	}//dequeuePacket
 	
 	
 }//SendConnection

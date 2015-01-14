@@ -5,6 +5,9 @@ package simulation;
 public class Simulation {
 	
 	
+	//Simulation globals
+	public static final int SIMULATION_RUNS = 5;
+	
 	//Client globals
 	public static final int CLIENT_SEND_INTERVAL 	= 1000; //milliseconds
 	public static final int CLIENT_NUM_OF_PACKETS 	= 10;
@@ -40,6 +43,8 @@ public class Simulation {
 		for (int i=0; i<cl.length; i++) {
 			cl[i].start();
 		}//for
+		
+		
 		
 		
 	}//main
