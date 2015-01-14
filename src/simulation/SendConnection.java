@@ -2,7 +2,7 @@ package simulation;
 
 public class SendConnection extends Thread {
 	
-	public static final int SERVER_QUEUE_SIZE = 10000;
+	public static final int DEFAULT_QUEUE_SIZE = 10000;
 	
 	private volatile boolean running = true;
 	private final long runTime;				//run time in seconds of SendConnection
@@ -11,8 +11,8 @@ public class SendConnection extends Thread {
 	/**
 	 * Buffer for received packets
 	 */
-	private Packet[] pQueue = new Packet[SERVER_QUEUE_SIZE];
-	private volatile int enqueueIndex = 0;
+	private Packet[] pQueue;
+	volatile int enqueueIndex = 0;
 	private volatile int dequeueIndex = 0;
 	
 	
@@ -24,6 +24,7 @@ public class SendConnection extends Thread {
 		super();
 		this.runTime = 10;
 		this.connectionSpeed = 10;
+		this.pQueue = new Packet[DEFAULT_QUEUE_SIZE];
 	}//Constructor
 	
 	/**
@@ -31,10 +32,11 @@ public class SendConnection extends Thread {
 	 * @param runTime connection run time in sec after number of seconds it will terminate
 	 * @param speed connection speed in Mbs
 	 */
-	SendConnection(int runTime, int speed) {
+	SendConnection(int runTime, int speed, int queueSize) {
 		super();
 		this.runTime = (long)runTime*Time.NANOSEC_PER_SEC;
 		this.connectionSpeed = speed;
+		this.pQueue = new Packet[queueSize];
 	}//Constructor
 	
 	
@@ -81,7 +83,7 @@ public class SendConnection extends Thread {
 		if (pQueue[enqueueIndex] == null) {
 			pQueue[enqueueIndex] = packet;
 			enqueueIndex = (enqueueIndex+1)%pQueue.length;
-			System.out.printf("SendConnection: received packet %d\n", packet.getId());
+			//System.out.printf("SendConnection: received packet %d\n", packet.getId());
 			return true;
 		} else {
 			return false;
@@ -99,7 +101,7 @@ public class SendConnection extends Thread {
 		if (pQueue[dequeueIndex] == null) {
 			return false;
 		} else {
-			System.out.printf("SendConnection: Sending packet %d\n", pQueue[dequeueIndex].getId());
+			//System.out.printf("SendConnection: Sending packet %d\n", pQueue[dequeueIndex].getId());
 			pQueue[dequeueIndex] = null;
 			dequeueIndex = (dequeueIndex+1)%pQueue.length;
 			return true;

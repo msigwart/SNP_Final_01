@@ -7,7 +7,7 @@ public class Client extends Thread {
 	
 	private final int clientId;			//Client ID
 	private final int numOfPackets;		//The number of packets sent by client
-	private final int interval;			//Interval at which packets are sent in milliseconds
+	private final int interval;			//Interval at which packets are sent in microseconds
 	
 	
 	private long startTime;
@@ -48,16 +48,21 @@ public class Client extends Thread {
 				currentTime = startTime;
 				System.out.printf("Client %d: Connected to sendConnection\n", this.clientId);
 				
-				int i=0;
+				int packetCounter = 0;
 				long newTime;
-				while (i<numOfPackets) {	//send number of Packets
+				while (packetCounter<numOfPackets) {	//send number of Packets
 					newTime = System.nanoTime();	//get currentTime
-					if (newTime - currentTime >= interval*10000000) {
+					if (newTime - currentTime >= interval*Time.NANOSEC_PER_MICROSEC) {	//TODO --> Check for long repetition
+						
 						Packet packet = new Packet();
-						System.out.printf("Client %d: Sending packet %d\n", this.clientId, packet.getId());
-						sendConnection.enqueuePacket(packet);
+						System.out.printf("Client %d: Created Packet: ID %d\n", this.clientId, packet.getId());
+						if ( !sendConnection.enqueuePacket(packet) ){
+							System.out.printf("-------> Client %d: Lost packet %d\n", this.clientId, packet.getId());
+						} else {
+							//System.out.printf("Client %d: Sent packet %d\n", this.clientId, packet.getId());
+						}//if
+						packetCounter += 1;
 						currentTime = newTime;
-						i++;
 					}//if
 				}//while
 				running = false;
