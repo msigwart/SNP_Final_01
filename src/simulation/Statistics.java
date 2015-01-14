@@ -3,13 +3,22 @@ import java.util.ArrayList;
 import java.io.*;
 import java.nio.file.Files;
 
-public class Statistic {
+public class Statistics {
 	
 	private ArrayList<Event> events = new ArrayList<Event>();
 	
-	public void createEvent(int eventType, Packet packet){
+	//TODO: Create Constructor
+	
+	
+	/**
+	 * Triggers an event of the simulation
+	 * @param eventType the type of the event that occurred
+	 * @param packet the packet the event occurred with
+	 */
+	public void triggerEvent(int eventType, Packet packet){
 		writeEventIntoFile(new Event(eventType, packet));
-	}
+	}//createEvent
+	
 	
 	public void writeEventIntoFile(Event event){
 		try {
@@ -23,8 +32,9 @@ public class Statistic {
             w.close();
         } catch (IOException e) {
             System.err.println("Problem writing to the file statsTest.txt");
-        }
-	}
+        }//catch
+	}//writeEventIntoFile
+	
 	
 	public void readEventsFromFile() throws IOException{
 		File file = new File("statsTest.txt");
@@ -40,7 +50,7 @@ public class Statistic {
 			while ((content = fis.read()) != -1) {
 				// convert to char and display it
 				System.out.print((char) content);
-			}
+			}//while
  
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -50,7 +60,9 @@ public class Statistic {
 					fis.close();
 			} catch (IOException ex) {
 				ex.printStackTrace();
-			}
-		}
-	}
-}
+			}//try
+		}//finally
+	}//readEventsFromFile
+	
+	
+}//Statistics

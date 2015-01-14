@@ -55,7 +55,7 @@ public class Client extends Thread {
 					if ( (newTime - currentTime) >= (interval*Time.NANOSEC_PER_MICROSEC) ) {	//TODO --> Check for long repetition
 						
 						Packet packet = new Packet();
-						System.out.printf("Client %d: Created Packet: ID %d at time\n", this.clientId, packet.getId());
+						//System.out.printf("Client %d: Created Packet: ID %d at time\n", this.clientId, packet.getId());
 						if ( !sendConnection.enqueuePacket(packet) ){
 							System.out.printf("-------> Client %d: Lost packet %d\n", this.clientId, packet.getId());
 						} else {

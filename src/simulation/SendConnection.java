@@ -83,7 +83,7 @@ public class SendConnection extends Thread {
 		if (pQueue[enqueueIndex] == null) {
 			pQueue[enqueueIndex] = packet;
 			enqueueIndex = (enqueueIndex+1)%pQueue.length;
-			//System.out.printf("SendConnection: received packet %d\n", packet.getId());
+			System.out.printf("SendConnection: received packet %d\n", packet.getId());
 			return true;
 		} else {
 			return false;
@@ -101,7 +101,7 @@ public class SendConnection extends Thread {
 		if (pQueue[dequeueIndex] == null) {
 			return false;
 		} else {
-			//System.out.printf("SendConnection: Sending packet %d\n", pQueue[dequeueIndex].getId());
+			System.out.printf("SendConnection: Sending packet %d\n", pQueue[dequeueIndex].getId());
 			pQueue[dequeueIndex] = null;
 			dequeueIndex = (dequeueIndex+1)%pQueue.length;
 			return true;
