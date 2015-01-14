@@ -15,6 +15,12 @@ public class Event {
 	private final long creationTime;	//in nanoseconds
 	
 	
+	/**
+	 * Constructor for event. Creates an event and captures 
+	 * the time of event occurrence.
+	 * @param eventType the type of the event
+	 * @param packet the packet the event occurred with
+	 */
 	Event(int eventType, Packet packet){
 		this.eventType= eventType;
 		this.packet = packet;
@@ -41,8 +47,8 @@ public class Event {
 			return "DQUEUE: " + "Packet " + packet.getId();
 		else{
 			return "ENQUEUE: "  + "Packet " + packet.getId();
-		}//if
-		
+		}//if	
 	}//toString
+	
 	
 }//Event
