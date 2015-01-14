@@ -6,7 +6,7 @@ public class Packet {
 	/**
 	 * Static id counter
 	 */
-	public static int id = 0;
+	public static volatile int id = 0;
 	
 	/**
 	 * Packet ID
