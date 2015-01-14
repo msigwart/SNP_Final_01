@@ -3,7 +3,12 @@ package simulation;
 import java.util.Observable;
 import java.util.Observer;
 
-
+/**
+ * Client class to send packets to a send connection.
+ * Extends Thread and implements Observer (Observer Pattern)
+ * @author Marten Sigwart
+ *
+ */
 public class Client extends Thread implements Observer {
 
 	private volatile boolean running = true;
@@ -60,6 +65,8 @@ public class Client extends Thread implements Observer {
 					newTime = System.nanoTime();	//get currentTime
 					
 					if ( (newTime - currentTime) >= (interval*Time.NANOSEC_PER_MICROSEC) ) {	//TODO --> Check for long repetition	
+						
+						/* Create new packet */
 						Packet packet = new Packet();
 						//System.out.printf("Client %d: Created Packet: ID %d at time\n", this.clientId, packet.getId());
 						if ( !sendConnection.enqueuePacket(packet) ){
@@ -69,6 +76,7 @@ public class Client extends Thread implements Observer {
 						}//if
 						packetCounter += 1;
 						currentTime = newTime;
+						
 					} else if (newTime < currentTime) {
 						currentTime = newTime;
 						
@@ -79,13 +87,13 @@ public class Client extends Thread implements Observer {
 			}//if
 			
 		}//while
-		this.sendConnection.deleteObserver(this);
-		this.sendConnection = null;
+		this.sendConnection.deleteObserver(this);		//delete yourself from list of observers
+		this.sendConnection = null;						//delete sendConncection
 		System.out.printf("Client %d: terminated.\n", this.clientId);
 	}//run
 
 
-	@Override
+	@Override		//--> OBSERVER PATTERN
 	public void update(Observable o, Object arg) {
 		switch ((int)arg) {
 			case SendConnection.SERVER_EVENT_TERMINATED:
