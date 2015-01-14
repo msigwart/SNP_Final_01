@@ -2,7 +2,6 @@ package simulation;
 
 public class Packet {
 	
-	public static final int PACKET_SIZE = 1526; //bytes
 	
 	/**
 	 * Static id counter

@@ -13,6 +13,7 @@ public class SendConnection extends Thread {
 	private int enqueueIndex = 0;
 	private int dequeueIndex = 0;
 	
+	
 	private long startTime;
 	private long currentTime;
 	
@@ -58,6 +59,7 @@ public class SendConnection extends Thread {
 	}//run
 	
 	
+	
 	/**
 	 * This method enqueues a packet into the packet queue
 	 * @param packet the packet to be enqueued
@@ -74,6 +76,7 @@ public class SendConnection extends Thread {
 			return false;
 		}//if
 	}//enqueuePacket
+	
 	
 	
 	/**
