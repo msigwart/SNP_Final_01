@@ -11,6 +11,8 @@ import java.util.Observer;
  */
 public class Client extends Thread implements Observer {
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Private Members
 	private volatile boolean running = true;
 	private volatile SendConnection sendConnection = null;
 	
@@ -21,7 +23,9 @@ public class Client extends Thread implements Observer {
 	
 	private long startTime;
 	private long currentTime;
-	
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Constructors
 	/**
 	 * Creates a new client
 	 * @param id the client ID
@@ -38,7 +42,7 @@ public class Client extends Thread implements Observer {
 	}//Constructor
 	
 	/**
-	 * Creates a new client
+	 * Creates a new client, priority will be set to false
 	 * @param id the client ID
 	 * @param numPackets the number of packets the client will send
 	 * @param interval the interval in milliseconds at which rate packets are sent
@@ -48,6 +52,8 @@ public class Client extends Thread implements Observer {
 	}//Constructor
 	
 	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Methods
 	
 	
 	// Getter for client ID
@@ -59,7 +65,8 @@ public class Client extends Thread implements Observer {
 		sendConnection.addObserver(this);
 	}//connectToSender
 	
-	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Run Method	
 	/**
 	 * Run Method for client:<br>
 	 * 1. Wait for connection to SendConnection<br>

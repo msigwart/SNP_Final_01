@@ -4,16 +4,24 @@ import java.util.Observable;
 
 public class SendConnection extends Observable implements Runnable {
 	
-	//Globals
-	public static final int DEFAULT_QUEUE_SIZE = 10000;
-	//Server events
-	public static final int SERVER_EVENT_TERMINATED = 1;
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Global variables
 	
+	// Default values
+	public static final int DEFAULT_QUEUE_NONPRIO_SIZE 	= 10000;
+	public static final int DEFAULT_QUEUE_PRIO_SIZE 	= 10000;
+	
+	//Server events
+	public static final int SERVER_EVENT_TERMINATED 	= 1;
+	
+	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Private Members
 	
 	//Thread variables
 	private final Thread thread = new Thread(this);
 	private volatile boolean running = true;
-	
 	
 	/**
 	 * Priority buffer for received packets from priority clients
@@ -29,7 +37,6 @@ public class SendConnection extends Observable implements Runnable {
 	volatile int inIndexNonPrio = 0;
 	private volatile int outIndexNonPrio = 0;
 	
-	
 	/**
 	 * Connection speed in Mbs
 	 */
@@ -41,17 +48,21 @@ public class SendConnection extends Observable implements Runnable {
 	private long startTime;
 	private long currentTime;
 	
+
 	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Constructors	
 	
-	
-	/* Constructors */	
+	/**
+	 *  Creates a new Send connection.<br>
+	 *  - Run time set to 10 s.<br>
+	 *  - Connection speed set to 10 Mbs.<br>
+	 */	
 	SendConnection() {
 		this.runTime = 10;
 		this.connectionSpeed = 10;
-		this.queueNonPrio = new Packet[DEFAULT_QUEUE_SIZE];
+		this.queueNonPrio = new Packet[DEFAULT_QUEUE_NONPRIO_SIZE];
 	}//Constructor
-	
-	
 	
 	/**
 	 * Creates a new SendConnection
@@ -63,7 +74,10 @@ public class SendConnection extends Observable implements Runnable {
 		this.connectionSpeed = speed;
 		this.queueNonPrio = new Packet[queueSize];
 	}//Constructor
+
 	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Methods
 	
 	/**
 	 * Delegate for thread start
@@ -75,8 +89,16 @@ public class SendConnection extends Observable implements Runnable {
 	// Method to terminate thread
 	public void terminate() { running = false; }
 	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Run method
 	
-	// Run method of thread
+	/**
+	 * Run method of SendConnection:<br>
+	 * 1. Capture start time<br>
+	 * 2. Set current time to start time<br>
+	 * 3. Check if a packet can be send, if yes send packet (dequeue)<br>
+	 * 4. Check if run time is reached, if yes terminate SendConnection<br>
+	 */
 	public void run() {
 		if (thread == null || Thread.currentThread() != thread) throw new IllegalStateException();
 		startTime 	= System.nanoTime();			// Get start time
@@ -103,8 +125,10 @@ public class SendConnection extends Observable implements Runnable {
 		
 		System.out.println("SendConnection has terminated...");
 	}//run
+
 	
-	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+// Enqueue and Dequeue methods	
 	
 	/**
 	 * This method enqueues a packet into the packet queue
