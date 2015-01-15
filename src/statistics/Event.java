@@ -51,7 +51,7 @@ public class Event {
 	@Override
 	public String toString(){
 		if(eventType == EVENT_TYPE_DQUEUE)
-			return "DQUEUE at (" + creationTime + "): " + "Packet " + packet.getId() + " - Priority " + packet.getPriority();
+			return "DQUEUE  at (" + creationTime + "): " + "Packet " + packet.getId() + " - Priority " + packet.getPriority();
 		else{
 			return "ENQUEUE at (" + creationTime + "): " + "Packet " + packet.getId() + " - Priority " + packet.getPriority();
 		}//if	
