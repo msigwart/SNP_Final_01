@@ -96,10 +96,10 @@ public class Client extends Thread implements Observer {
 						/* Create new packet */
 						Packet packet = new Packet();
 						//System.out.printf("Client %d: Created Packet: ID %d at time\n", this.clientId, packet.getId());
-						if ( !sendConnection.enqueuePacket(packet) ){
+						if ( !sendConnection.enqueuePacket(packet, packet.getPriority()) ){			//packet could not be put in server queue
 							System.out.printf("-------> Client %d: Lost packet %d\n", this.clientId, packet.getId());
 						} else {
-							System.out.printf("Client %d: Sent packet %d\n", this.clientId, packet.getId());
+							System.out.printf("Client %d: Sent packet %d\n", this.clientId, packet.getId());	//packet successfully reached server queue
 						}//if
 						packetCounter += 1;
 						currentTime = newTime;

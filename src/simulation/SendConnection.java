@@ -1,6 +1,8 @@
 package simulation;
 
+import java.util.NoSuchElementException;
 import java.util.Observable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import statistics.Event;
 import statistics.Statistics;
@@ -48,9 +50,12 @@ public class SendConnection extends Observable implements Runnable {
 	/**
 	 * Buffer for received packets from non-priority clients
 	 */
-	private 			Packet[] 	queueNonPrio;
+	//private 			Packet[] 	queueNonPrio;
 	private volatile 	int 		inIndexNonPrio = 0;
 	private volatile 	int 		outIndexNonPrio = 0;
+	
+	private ConcurrentLinkedQueue<Packet> queueNonPriority;
+	
 	
 	/**
 	 * Connection speed in Mbs
@@ -86,7 +91,8 @@ public class SendConnection extends Observable implements Runnable {
 	SendConnection(int runTime, int speed, int queueSize, Statistics stats) {
 		this.runTime = (long)runTime*Time.NANOSEC_PER_SEC;
 		this.connectionSpeed = speed;
-		this.queueNonPrio = new Packet[queueSize];
+		//this.queueNonPrio = new Packet[queueSize];
+		this.queueNonPriority = new ConcurrentLinkedQueue<Packet>();
 		this.stats = stats;
 	}//Constructor
 
@@ -127,7 +133,8 @@ public class SendConnection extends Observable implements Runnable {
 			
 			// It's time to send a packet
 			if ( (newTime - currentTime) >= (Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC) ) {
-				dequeuePacket();
+				//dequeuePacket();
+				Packet packet = dequeuePacket(false);
 				currentTime = newTime;
 			}//if
 			
@@ -139,7 +146,7 @@ public class SendConnection extends Observable implements Runnable {
 		}//while
 		
 		System.out.println("SendConnection has terminated...");
-		stats.readEventsFromFile();
+		//stats.readEventsFromFile();			//TODO--> shouldn't be called in SendConnection, belongs to simulation environment
 	}//run
 
 	
@@ -149,38 +156,40 @@ public class SendConnection extends Observable implements Runnable {
 	/**
 	 * This method enqueues a packet into the packet queue
 	 * @param packet the packet to be enqueued
+	 * @param priority the priority of the packet --> determines into which queue
 	 * @return true if a packet is successfully received
 	 * 		   false if a packet could not be enqueued --> Queue full?
 	 */
-	public synchronized boolean enqueuePacket(Packet packet) {
-		if (queueNonPrio[inIndexNonPrio] == null) {
-			stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);			// trigger enqueue event for statistics
-			queueNonPrio[inIndexNonPrio] = packet;
-			inIndexNonPrio = (inIndexNonPrio+1)%queueNonPrio.length;
-			System.out.printf("SendConnection: received packet %d\n", packet.getId());
-			return true;
-		} else {
-			return false;
-		}//if
+	public boolean enqueuePacket(Packet packet, boolean priority) {
+		System.out.printf("SendConnection: received packet %d\n", packet.getId());
+		if (priority = true) {
+			//TODO --> return priority == true packet
+		}
+		return queueNonPriority.add(packet);
 	}//enqueuePacket
 	
 	
 	
 	/**
 	 * This method dequeues the packet first in line in the packet queue
+	 * @param priority the priority of the packet --> determines from which queue
 	 * @return true if a packet is successfully dequeued
 	 * 		   false if no packet is in line
 	 */
-	private synchronized boolean dequeuePacket() {
-		if (queueNonPrio[outIndexNonPrio] == null) {
-			return false;
-		} else {
-			stats.triggerEvent(Event.EVENT_TYPE_DQUEUE, queueNonPrio[outIndexNonPrio]);	//trigger dequeue event for statistics
-			System.out.printf("SendConnection: Sending packet %d\n", queueNonPrio[outIndexNonPrio].getId());
-			queueNonPrio[outIndexNonPrio] = null;
-			outIndexNonPrio = (outIndexNonPrio+1)%queueNonPrio.length;
-			return true;
-		}//if
+	private Packet dequeuePacket(boolean priority) {
+		try {
+			Packet packet = null;
+			if (priority == false) {
+				packet = queueNonPriority.remove();
+			} else {
+				//TODO--> queuePriority
+			}//if
+			System.out.printf("SendConnection: Sending packet %d\n", packet.getId());
+			return packet;
+		} catch (NoSuchElementException e) {
+			//System.out.printf("SendConnection: No Element in Queue...\n");
+			return null;
+		}//try
 	}//dequeuePacket
 	
 	
