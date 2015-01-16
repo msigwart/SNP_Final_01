@@ -20,13 +20,14 @@ public class Packet {
 	/**
 	 * Packet priority
 	 */
-	private final boolean 	priority;
+	//private final boolean 	priority;
+	private final Priority  priority;
 	
 	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 // Constructors
 	
-	public Packet(int packetId, boolean priority){
+	public Packet(int packetId, Priority priority){
 		this.packetId = packetId;
 		this.priority = priority;
 	}//Constructor
@@ -35,7 +36,7 @@ public class Packet {
 	 * Creates a packet.
 	 * @param priority priority of packet, true if priority packet
 	 */
-	Packet(boolean priority) {
+	Packet(Priority priority) {
 		this(id++, priority);
 	}//Constructor
 	
@@ -43,14 +44,14 @@ public class Packet {
 	 * Creates a default non-priority packet
 	 */
 	Packet() {
-		this(false);
+		this(Priority.PACKET_PRIORITY_LOW);
 	}//Constructor
 	
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 // Getter and Setter
 	public int 		getId()			{ return packetId; }
-	public boolean 	getPriority() 	{ return priority; }
+	public Priority	getPriority() 	{ return priority; }
 
 	
 }//Packet

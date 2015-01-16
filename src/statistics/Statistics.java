@@ -7,6 +7,7 @@ import java.io.*;
 import java.nio.file.Files;
 
 import simulation.Packet;
+import simulation.Priority;
 
 public class Statistics {
 	
@@ -102,7 +103,7 @@ public class Statistics {
 		Event event = null;
 		Packet packet = null;
 		int eventType;
-		boolean packetPriority;
+		Priority packetPriority;
 		
 		if(strEvent.substring(0, strEvent.indexOf('(')).equalsIgnoreCase("DQUEUE")){
 			eventType = Event.EVENT_TYPE_DQUEUE;
@@ -111,13 +112,13 @@ public class Statistics {
 			eventType = Event.EVENT_TYPE_ENQUEUE;
 		}//else
 		
-		boolean found = Arrays.asList(strEvent.split(" ")).contains("true"); 
+		boolean found = Arrays.asList(strEvent.split(" ")).contains("true"); 		//TODO: Change to enum Priority
 		
 		if(found){
-			packetPriority = true;
+			packetPriority = Priority.PACKET_PRIORITY_HIGH;
 		}
 		else{
-			packetPriority = false;
+			packetPriority = Priority.PACKET_PRIORITY_LOW;
 		}//if
 		
 		

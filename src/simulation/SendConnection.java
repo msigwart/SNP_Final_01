@@ -161,13 +161,22 @@ public class SendConnection extends Observable implements Runnable {
 	 * @return true if a packet is successfully received
 	 * 		   false if a packet could not be enqueued --> Queue full?
 	 */
-	public boolean enqueuePacket(Packet packet, boolean priority) {
+	public boolean enqueuePacket(Packet packet, Priority priority) {
 		System.out.printf("SendConnection: received packet %d\n", packet.getId());
-		if (priority = true) {
-			return queuePriority.add(packet);
-		} else {
-			return queueNonPriority.add(packet);
-		}//else
+		boolean success = false;
+		switch (priority) {
+			case PACKET_PRIORITY_HIGH:
+				success = queuePriority.add(packet);
+				break;
+			case PACKET_PRIORITY_LOW:
+				success = queueNonPriority.add(packet);
+				break;
+			default:
+				break;
+		}//switch
+		
+		return success;
+
 	}//enqueuePacket
 	
 	
