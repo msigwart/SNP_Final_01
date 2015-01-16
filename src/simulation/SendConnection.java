@@ -132,13 +132,11 @@ public class SendConnection extends Observable implements Runnable {
 				Packet packet = null;
 				if ( !queuePriority.isEmpty() ) {
 					packet = dequeuePacket(true);
-					currentTime = newTime;
 				} else if ( !queueNonPriority.isEmpty() ) {
 					packet = dequeuePacket(false);
-					currentTime = newTime;
 				}//if
-			}//if
-			
+				currentTime = newTime;
+			}
 			// It's time to terminate SendConnection
 			if (currentTime - startTime >= (runTime)) {
 				running = false;
