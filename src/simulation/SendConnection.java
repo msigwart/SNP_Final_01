@@ -160,7 +160,7 @@ public class SendConnection extends Observable implements Runnable {
 	 * 		   false if a packet could not be enqueued --> Queue full?
 	 */
 	public boolean enqueuePacket(Packet packet, Priority priority) {
-		System.out.printf("SendConnection: received packet %d\n", packet.getId());
+		System.out.printf("SendConnection: received packet %d\n", packet.getId());		//TODO: Output message in calls not in declaration
 		boolean success = false;
 		switch (priority) {
 			case PACKET_PRIORITY_HIGH:
@@ -193,7 +193,7 @@ public class SendConnection extends Observable implements Runnable {
 			} else {
 				packet = queueNonPriority.remove();
 			}//if
-			System.out.printf("SendConnection: Sending packet %d\n", packet.getId());
+			System.out.printf("SendConnection: Sending packet %d\n", packet.getId()); //TODO: Output message in calls not in declaration
 			return packet;
 		} catch (NoSuchElementException e) {
 			//System.out.printf("SendConnection: No Element in Queue...\n");
