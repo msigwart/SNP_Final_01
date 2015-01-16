@@ -3,6 +3,8 @@ package simulation;
 import java.util.Observable;
 import java.util.Observer;
 
+import lecuyer.RandomIntervalGenerator;
+
 /**
  * Client class to send packets to a send connection.
  * Extends Thread and implements Observer (Observer Pattern)
@@ -18,11 +20,13 @@ public class Client extends Thread implements Observer {
 	
 	private final int 		clientId;			//Client ID
 	private final int 		numOfPackets;		//The number of packets sent by client
-	private final int 		interval;			//Interval at which packets are sent in microseconds
-	private final boolean 	priority;
+	private final Priority 	priority;
 	
-	private long startTime;
-	private long currentTime;
+	private final RandomIntervalGenerator rig;	//random intervals for sending packets of
+	
+	private int		interval;			//Interval at which packets are sent in microseconds
+	private long 	startTime;
+	private long 	currentTime;
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 // Constructors
@@ -33,12 +37,13 @@ public class Client extends Thread implements Observer {
 	 * @param interval the interval in milliseconds at which rate packets are sent
 	 * @param priority true if Client is a priority client
 	 */
-	Client(int id, int numPackets, int interval, boolean priority) {
+	Client(int id, int numPackets, int interval, Priority priority) {
 		super();
 		this.clientId 		= id;
 		this.numOfPackets 	= numPackets;
 		this.interval 		= interval;
 		this.priority 		= priority;
+		this.rig			= new RandomIntervalGenerator(Simulation.CLIENT_SEND_MIN_INTERVAL, Simulation.CLIENT_SEND_MAX_INTERVAL);
 	}//Constructor
 	
 	/**
@@ -48,7 +53,7 @@ public class Client extends Thread implements Observer {
 	 * @param interval the interval in milliseconds at which rate packets are sent
 	 */
 	Client(int id, int numPackets, int interval) {
-		this(id, numPackets, interval, false);
+		this(id, numPackets, interval, Priority.PACKET_PRIORITY_LOW);
 	}//Constructor
 	
 	
@@ -87,6 +92,8 @@ public class Client extends Thread implements Observer {
 				
 				int packetCounter = 0;
 				long newTime;
+				interval = rig.generateNewRandomInterval();
+				System.out.printf("Client: new Interval: %d\n", interval);
 				
 				while (packetCounter<numOfPackets && running == true) {	//send number of Packets
 					newTime = System.nanoTime();	//get currentTime
@@ -100,6 +107,8 @@ public class Client extends Thread implements Observer {
 							System.out.printf("-------> Client %d: Lost packet %d\n", this.clientId, packet.getId());
 						} else {
 							System.out.printf("Client %d: Sent packet %d\n", this.clientId, packet.getId());	//packet successfully reached server queue
+							interval = rig.generateNewRandomInterval();
+							System.out.printf("Client %d: new Interval: %d\n", this.clientId, interval);
 						}//if
 						packetCounter += 1;
 						currentTime = newTime;
