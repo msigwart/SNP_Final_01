@@ -43,18 +43,12 @@ public class SendConnection extends Observable implements Runnable {
 	/**
 	 * Priority buffer for received packets from priority clients
 	 */
-	private 			Packet[] 	queuePrio;
-	private volatile 	int 		inIndexPrio = 0;
-	private volatile 	int 		outIndexPrio = 0;
-	
+	private 			ConcurrentLinkedQueue<Packet>	queuePriority;
+
 	/**
 	 * Buffer for received packets from non-priority clients
 	 */
-	//private 			Packet[] 	queueNonPrio;
-	private volatile 	int 		inIndexNonPrio = 0;
-	private volatile 	int 		outIndexNonPrio = 0;
-	
-	private ConcurrentLinkedQueue<Packet> queueNonPriority;
+	private 			ConcurrentLinkedQueue<Packet> 	queueNonPriority;
 	
 	
 	/**
@@ -92,7 +86,8 @@ public class SendConnection extends Observable implements Runnable {
 		this.runTime = (long)runTime*Time.NANOSEC_PER_SEC;
 		this.connectionSpeed = speed;
 		//this.queueNonPrio = new Packet[queueSize];
-		this.queueNonPriority = new ConcurrentLinkedQueue<Packet>();
+		this.queueNonPriority 	= new ConcurrentLinkedQueue<Packet>();
+		this.queuePriority		= new ConcurrentLinkedQueue<Packet>();
 		this.stats = stats;
 	}//Constructor
 
@@ -134,8 +129,14 @@ public class SendConnection extends Observable implements Runnable {
 			// It's time to send a packet
 			if ( (newTime - currentTime) >= (Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC) ) {
 				//dequeuePacket();
-				Packet packet = dequeuePacket(false);
-				currentTime = newTime;
+				Packet packet = null;
+				if ( !queuePriority.isEmpty() ) {
+					packet = dequeuePacket(true);
+					currentTime = newTime;
+				} else if ( !queueNonPriority.isEmpty() ) {
+					packet = dequeuePacket(false);
+					currentTime = newTime;
+				}//if
 			}//if
 			
 			// It's time to terminate SendConnection
@@ -163,9 +164,10 @@ public class SendConnection extends Observable implements Runnable {
 	public boolean enqueuePacket(Packet packet, boolean priority) {
 		System.out.printf("SendConnection: received packet %d\n", packet.getId());
 		if (priority = true) {
-			//TODO --> return priority == true packet
-		}
-		return queueNonPriority.add(packet);
+			return queuePriority.add(packet);
+		} else {
+			return queueNonPriority.add(packet);
+		}//else
 	}//enqueuePacket
 	
 	
@@ -179,10 +181,10 @@ public class SendConnection extends Observable implements Runnable {
 	private Packet dequeuePacket(boolean priority) {
 		try {
 			Packet packet = null;
-			if (priority == false) {
-				packet = queueNonPriority.remove();
+			if (priority == true) {
+				packet = queuePriority.remove();
 			} else {
-				//TODO--> queuePriority
+				packet = queueNonPriority.remove();
 			}//if
 			System.out.printf("SendConnection: Sending packet %d\n", packet.getId());
 			return packet;
