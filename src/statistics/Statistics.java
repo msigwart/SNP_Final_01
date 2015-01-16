@@ -1,6 +1,9 @@
 package statistics;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.*;
@@ -8,8 +11,17 @@ import java.nio.file.Files;
 
 import simulation.Packet;
 import simulation.Priority;
+import simulation.SendConnection;
 
-public class Statistics {
+
+/**
+ * This class collects the event of the simulation, saves them into file. It implements the Observer interface.
+ * It provides several different statistics measures, such as average queuing time, etc.
+ * 
+ * @author Bernardo Paulino
+ *
+ */
+public class Statistics implements Observer {
 	
 	private ArrayList<Event> events = new ArrayList<Event>();
 	private String outputFile;
@@ -136,6 +148,21 @@ public class Statistics {
 	
 	private int readNumOfFiles(){
 		return new File("output/").listFiles().length;
+	}
+	
+
+
+	@Override
+	public void update(Observable o, Object arg) {
+		
+		switch ((int)arg) {
+			case SendConnection.SERVER_EVENT_TERMINATED:
+				System.out.printf("######################## Statistics ######################### \n");
+				System.out.printf("Collecting statistics...\n");
+				break;
+			default:
+				break;
+		}//switch
 	}
 	
 }//Statistics

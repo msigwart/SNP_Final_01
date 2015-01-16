@@ -89,6 +89,7 @@ public class SendConnection extends Observable implements Runnable {
 		this.queueNonPriority 	= new ConcurrentLinkedQueue<Packet>();
 		this.queuePriority		= new ConcurrentLinkedQueue<Packet>();
 		this.stats = stats;
+		this.addObserver(stats);
 	}//Constructor
 
 	
@@ -140,11 +141,10 @@ public class SendConnection extends Observable implements Runnable {
 			// It's time to terminate SendConnection
 			if (currentTime - startTime >= (runTime)) {
 				running = false;
-				tellObservers(SERVER_EVENT_TERMINATED);
 			}//if
 		}//while
-		
-		System.out.println("SendConnection has terminated...");
+		System.out.println("SendConnection: Terminated...");
+		tellObservers(SERVER_EVENT_TERMINATED);
 		//stats.readEventsFromFile();			//TODO--> shouldn't be called in SendConnection, belongs to simulation environment
 	}//run
 
