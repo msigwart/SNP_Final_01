@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.*;
@@ -33,13 +35,15 @@ public class Statistics implements Observer {
 	private int numFiles;
 	
 	// Different statistics fields
-	private ArrayList<Event> eventsNonPrio 	= new ArrayList<Event>();
-	private long avrgQueueTimeNonPrio;
+	//private ArrayList<Event> eventsNonPrio 	= new ArrayList<Event>();
+	private CopyOnWriteArrayList<Event> eventsNonPrio 	= new CopyOnWriteArrayList<Event>();	// TODO--> better concurrent collection (ArrayList not concurrent)
+	private long avrgQueueTimeNonPrio;			// average queuing time for non priority packets in nanoseconds
 	private int enEventsNonPrio;
 	private int deEventsNonPrio;
 	
-	private ArrayList<Event> eventsPrio		= new ArrayList<Event>();
-	private long avrgQueueTimePrio;
+	//private ArrayList<Event> eventsPrio		= new ArrayList<Event>();
+	private CopyOnWriteArrayList<Event> eventsPrio		= new CopyOnWriteArrayList<Event>();
+	private long avrgQueueTimePrio;				// average queuing time for priority packets in nanoseconds
 	private int enEventsPrio;
 	private int deEventsPrio;
 	
@@ -66,7 +70,11 @@ public class Statistics implements Observer {
 	 * @param packet the packet the event occurred with
 	 */
 	public void triggerEvent(int eventType, Packet packet){
-		writeEventIntoFile(new Event(eventType, packet));
+		Event event = new Event(eventType, packet);
+		//write to file
+		writeEventIntoFile(event);
+		//do some statistics work
+		updateStatistics(event);
 	}//createEvent
 	
 	
@@ -103,25 +111,72 @@ public class Statistics implements Observer {
 	
 	private synchronized void writeEventIntoFile(Event event){
 		//System.out.printf("Statistics: Writing event into file...");
-		pWriter.printf("%s\n", event.toString());
+		pWriter.printf("%s\n", event.toString());//TODO--> add to event ArrayLists for updateStatistics during simulation
 		
+		switch (event.getPacket().getPriority()) {
+			case PACKET_PRIORITY_HIGH:
+				eventsPrio.add(event);
+				break;
+			case PACKET_PRIORITY_LOW:
+				eventsNonPrio.add(event);
+				break;
+			default:
+				break;
+			
+		}//switch
+		
+	}//writeEventIntoFile
+	
+	
+	/**
+	 * Updates some statistics. Is called when a new event is written to file
+	 * @param event the newly arrived event
+	 */
+	private void updateStatistics(Event event) {
 		//do some statistics work
 		switch (event.getEventType()) {
 		
 			case Event.EVENT_TYPE_ENQUEUE:
 				switch (event.getPacket().getPriority()) {
-					case PACKET_PRIORITY_HIGH:	enEventsPrio++;		break;
-					case PACKET_PRIORITY_LOW:  	enEventsNonPrio++;	break;
+					case PACKET_PRIORITY_HIGH:	enEventsPrio++;		break;		//update counter
+					case PACKET_PRIORITY_LOW:  	enEventsNonPrio++;	break;		//update counter
 					default: break;
 				}//switch
 				break;
 				
 			case Event.EVENT_TYPE_DEQUEUE:
+				Event enEvent;					// The corresponding enqueue Event
+				long queueTime;
 				switch (event.getPacket().getPriority()) {
-					case PACKET_PRIORITY_HIGH:	deEventsPrio++;		break;
-					case PACKET_PRIORITY_LOW:	deEventsNonPrio++;	break;
+				
+					case PACKET_PRIORITY_HIGH:
+						deEventsPrio++;		//update counter
+						
+						//update average queue time
+						enEvent = findEvent(Priority.PACKET_PRIORITY_HIGH, event.getPacket().getId(), Event.EVENT_TYPE_ENQUEUE);
+						if (enEvent != null) {
+							queueTime = event.getCreationTime() - enEvent.getCreationTime();
+							avrgQueueTimePrio = (avrgQueueTimePrio + queueTime)/2;
+						} else {
+							System.out.printf("ERROR ----------------> Couldn't find corresponding enqueue Packet %d\n", event.getPacket().getId());
+						}//if
+						break;
+						
+					case PACKET_PRIORITY_LOW:
+						deEventsNonPrio++;	//update counter
+						
+						//update average queue time
+						enEvent = findEvent(Priority.PACKET_PRIORITY_LOW, event.getPacket().getId(), Event.EVENT_TYPE_ENQUEUE);
+						if (enEvent != null) {
+							queueTime = event.getCreationTime() - enEvent.getCreationTime();
+							avrgQueueTimeNonPrio = (avrgQueueTimeNonPrio + queueTime)/2;
+						} else {
+							System.out.printf("ERROR ----------------> Couldn't find corresponding enqueue Packet %d\n", event.getPacket().getId());
+						}//if
+						break;
 					default: break;
 				}//switch
+				
 				break;
 				
 			case Event.EVENT_TYPE_UNKNOWN:
@@ -129,10 +184,32 @@ public class Statistics implements Observer {
 			default:
 				break;
 		}//switch
-	}//writeEventIntoFile
+	}//updateStatistics
 	
 	
 	
+	private Event findEvent(Priority priority, int id, int eventType) {
+		switch (priority) {
+			case PACKET_PRIORITY_HIGH:
+				for (Event e: eventsPrio) {
+					if (e.getEventType() == eventType && e.getPacket().getId() == id) {
+						return e;
+					}//if
+				}//for
+				return null;
+			case PACKET_PRIORITY_LOW:
+				for (Event e: eventsNonPrio) {
+					if (e.getEventType() == eventType && e.getPacket().getId() == id) {
+						return e;
+					}//if
+				}//for
+				return null;
+			default:
+				return null;
+		}//switch
+	}//findEvent
+
+
 	public void readEventsFromFile(){
 
 		try {
@@ -243,16 +320,16 @@ public class Statistics implements Observer {
 	 */
 	private void collectStatistics() {
 		System.out.printf("Collecting statistics...\n");
-		readEventsFromFile();
+		//readEventsFromFile();
 		//printEvents();
-		avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
-		avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
+		//avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
+		//avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
 	}//collectingStatistics
 
 
 	/**
 	 * Return the average time spent by packet in the queue
-	 * @return returns the average queue time in microseconds
+	 * @return returns the average queue time in nanoseconds
 	 */
 	private long getAverageQueueTime(Priority priority) {
 		long sumQueueTime = 0L;
@@ -294,7 +371,7 @@ public class Statistics implements Observer {
 		
 		if (eventCount == 0) {
 			return 0;
-		} else return (sumQueueTime/eventCount)/Time.NANOSEC_PER_MICROSEC;
+		} else return sumQueueTime/eventCount;
 		
 	}//getAverageQueueTime
 	
@@ -375,9 +452,9 @@ public class Statistics implements Observer {
 						  "Total Events \t\t%9d\t%9d\t| %9d\n", enEventsPrio+enEventsNonPrio, deEventsPrio+deEventsNonPrio, eventsNonPrio.size()+eventsPrio.size());
 		
 		System.out.printf("\n=== Average Queue Time =============\n");
-		System.out.printf("High Priority Packets:\t%9d µs\n", avrgQueueTimePrio);
-		System.out.printf("Low Priority Packets:\t%9d µs\n", avrgQueueTimeNonPrio);
-		System.out.printf("Total:\t\t\t%9d µs\n", (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2);	//TODO only if both != 0
+		System.out.printf("High Priority Packets:\t%9d µs\n", avrgQueueTimePrio/Time.NANOSEC_PER_MICROSEC);
+		System.out.printf("Low Priority Packets:\t%9d µs\n", avrgQueueTimeNonPrio/Time.NANOSEC_PER_MICROSEC);
+		System.out.printf("Total:\t\t\t%9d µs\n", ( (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2) / Time.NANOSEC_PER_MICROSEC );	//TODO only if both != 0
 		// If 'µ' is not displayed correctly, go to Eclipse > Preferences > General > Workspace > Text File Encoding
 
 		
