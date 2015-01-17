@@ -101,7 +101,7 @@ public class Client extends Thread implements Observer {
 					if ( (newTime - currentTime) >= (interval*Time.NANOSEC_PER_MICROSEC) ) {	//TODO --> Check for long repetition	
 						
 						/* Create new packet */
-						Packet packet = new Packet();
+						Packet packet = new Packet(this.priority);
 						//System.out.printf("Client %d: Created Packet: ID %d at time\n", this.clientId, packet.getId());
 						if ( !sendConnection.enqueuePacket(packet, packet.getPriority()) ){			//packet could not be put in server queue
 							System.out.printf("-------> Client %d: Lost packet %d\n", this.clientId, packet.getId());

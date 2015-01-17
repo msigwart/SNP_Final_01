@@ -35,7 +35,8 @@ public class Statistics implements Observer {
 	// Different statistics fields
 	private ArrayList<Event> eventsNonPrio 	= new ArrayList<Event>();
 	private ArrayList<Event> eventsPrio		= new ArrayList<Event>();
-	private long averageQueueTime;
+	private long avrgQueueTimePrio;
+	private long avrgQueueTimeNonPrio;
 	
 	/**
 	 * Creates a new Statistics instance for tracing simulation events
@@ -44,7 +45,8 @@ public class Statistics implements Observer {
 	public Statistics(String outputFile) {
 		this.outputFile = outputFile;
 		//this.numFiles = this.readNumOfFiles();
-		this.averageQueueTime = 0L;
+		this.avrgQueueTimePrio = 0L;
+		this.avrgQueueTimeNonPrio = 0L;
 		initializeStatistics();
 	}//Constructor
 	
@@ -110,7 +112,16 @@ public class Statistics implements Observer {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
 				else{
-					eventsNonPrio.add(e);
+					switch (e.getPacket().getPriority()) {
+						case PACKET_PRIORITY_HIGH:
+							eventsPrio.add(e);
+							break;
+						case PACKET_PRIORITY_LOW:
+							eventsNonPrio.add(e);
+							break;
+						default:
+							break;
+					}//switch
 				}//else
 				line = bReader.readLine();
 			}//while
@@ -144,12 +155,12 @@ public class Statistics implements Observer {
 			eventType = Event.EVENT_TYPE_UNKNOWN;
 		}//if
 		
-		boolean found = Arrays.asList(strEvent.split(" ")).contains("true"); 		//TODO: Change to enum Priority
+		//boolean found = Arrays.asList(strEvent.split(" ")).contains("PACKET_PRIORITY_HIGH"); 		//TODO: Change to enum Priority
 		
-		if(found){
+		if ( strEvent.toLowerCase().contains("PACKET_PRIORITY_HIGH".toLowerCase()) ) {
 			packetPriority = Priority.PACKET_PRIORITY_HIGH;
-		}
-		else{
+		} 
+		else {
 			packetPriority = Priority.PACKET_PRIORITY_LOW;
 		}//if
 		
@@ -200,7 +211,8 @@ public class Statistics implements Observer {
 		System.out.printf("Collecting statistics...\n");
 		readEventsFromFile();
 		//printEvents();
-		averageQueueTime = getAverageQueueTime();
+		avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
+		avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
 	}//collectingStatistics
 
 
@@ -208,23 +220,48 @@ public class Statistics implements Observer {
 	 * Return the average time spent by packet in the queue
 	 * @return returns the average queue time in microseconds
 	 */
-	private long getAverageQueueTime() {
+	private long getAverageQueueTime(Priority priority) {
 		long sumQueueTime = 0L;
 		int eventCount = 0;
 		
-		for (Event en: eventsNonPrio) {
-			if (en.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
-				for (Event de: eventsNonPrio) {
-					if (de.getEventType() == Event.EVENT_TYPE_DEQUEUE && de.getPacket().getId() == en.getPacket().getId()) {
-						sumQueueTime += de.getCreationTime() - en.getCreationTime();
-						eventCount++;
-						break;
+		switch (priority) {
+		
+			case PACKET_PRIORITY_HIGH:
+				for (Event en: eventsPrio) {
+					if (en.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
+						for (Event de: eventsNonPrio) {
+							if (de.getEventType() == Event.EVENT_TYPE_DEQUEUE && de.getPacket().getId() == en.getPacket().getId()) {
+								sumQueueTime += de.getCreationTime() - en.getCreationTime();
+								eventCount++;
+								break;
+							}//if
+						}//for
 					}//if
 				}//for
-			}//if
-		}//for
+				break;
+				
+			case PACKET_PRIORITY_LOW:
+				for (Event en: eventsNonPrio) {
+					if (en.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
+						for (Event de: eventsNonPrio) {
+							if (de.getEventType() == Event.EVENT_TYPE_DEQUEUE && de.getPacket().getId() == en.getPacket().getId()) {
+								sumQueueTime += de.getCreationTime() - en.getCreationTime();
+								eventCount++;
+								break;
+							}//if
+						}//for
+					}//if
+				}//for
+				break;
+				
+			default:
+				break;
+		}//switch
 		
-		return (sumQueueTime/eventCount)/Time.NANOSEC_PER_MICROSEC;
+		if (eventCount == 0) {
+			return 0;
+		} else return (sumQueueTime/eventCount)/Time.NANOSEC_PER_MICROSEC;
+		
 	}//getAverageQueueTime
 	
 	
@@ -301,8 +338,11 @@ public class Statistics implements Observer {
 		System.out.printf("========================================================+===========\n" +
 						  "Total Events \t\t%9d\t%9d\t| %9d\n", enqueuePrio+enqueueNonPrio, dequeuePrio+dequeueNonPrio, eventsNonPrio.size()+eventsPrio.size());
 		
-		System.out.printf("\n=== Average Queue Time ==========\n");
-		System.out.printf("Average Queue Time:\t%9d\n", averageQueueTime);
+		System.out.printf("\n=== Average Queue Time =============\n");
+		System.out.printf("High Priority Packets:\t%9d µs\n", avrgQueueTimePrio);
+		System.out.printf("Low Priority Packets:\t%9d µs\n", avrgQueueTimeNonPrio);
+		System.out.printf("Total:\t\t%9d µs\n", (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2);	//TODO only if both != 0
+		// If 'µ' is not displayed correctly, go to Eclipse > Preferences > General > Workspace > Text File Encoding
 
 		
 	}//printStatistics
