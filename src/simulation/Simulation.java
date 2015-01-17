@@ -18,11 +18,11 @@ public class Simulation {
 	
 	//Client globals
 	public static final int CLIENT_SEND_INTERVAL 		= 100; //microseconds
-	public static final int CLIENT_SEND_MIN_INTERVAL	= 120;
-	public static final int CLIENT_SEND_MAX_INTERVAL	= 125;
+	public static final int CLIENT_SEND_MIN_INTERVAL	= 100;
+	public static final int CLIENT_SEND_MAX_INTERVAL	= 100;
 	public static final int CLIENT_NUM_OF_PACKETS 		= 10000;
-	public static final int NUM_OF_CLIENTS				= 1;
-	public static final int NUM_OF_PRIORITY_CLIENTS		= 0;
+	public static final int NUM_OF_CLIENTS				= 10;
+	public static final int NUM_OF_PRIORITY_CLIENTS		= 3;
 	
 	//Server globals
 	public static final int SERVER_RUNTIME 				= 30; //seconds

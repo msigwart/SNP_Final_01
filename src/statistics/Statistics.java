@@ -229,9 +229,9 @@ public class Statistics implements Observer {
 			case PACKET_PRIORITY_HIGH:
 				for (Event en: eventsPrio) {
 					if (en.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
-						for (Event de: eventsNonPrio) {
+						for (Event de: eventsPrio) {
 							if (de.getEventType() == Event.EVENT_TYPE_DEQUEUE && de.getPacket().getId() == en.getPacket().getId()) {
-								sumQueueTime += de.getCreationTime() - en.getCreationTime();
+								sumQueueTime += (de.getCreationTime() - en.getCreationTime());
 								eventCount++;
 								break;
 							}//if
@@ -245,7 +245,7 @@ public class Statistics implements Observer {
 					if (en.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
 						for (Event de: eventsNonPrio) {
 							if (de.getEventType() == Event.EVENT_TYPE_DEQUEUE && de.getPacket().getId() == en.getPacket().getId()) {
-								sumQueueTime += de.getCreationTime() - en.getCreationTime();
+								sumQueueTime += (de.getCreationTime() - en.getCreationTime());
 								eventCount++;
 								break;
 							}//if
