@@ -106,6 +106,8 @@ public class SendConnection extends Observable implements Runnable {
 	// Method to terminate thread
 	public void terminate() { running = false; }
 	
+	
+	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 // Run method
 	
@@ -132,22 +134,33 @@ public class SendConnection extends Observable implements Runnable {
 				//dequeuePacket();
 				Packet packet = null;
 				if ( !queuePriority.isEmpty() ) {
-					packet = dequeuePacket(true);
+					packet = dequeuePacket(Priority.PACKET_PRIORITY_HIGH);			//TODO: Change to enum Priority
+					currentTime = newTime;
 				} else if ( !queueNonPriority.isEmpty() ) {
-					packet = dequeuePacket(false);
+					packet = dequeuePacket(Priority.PACKET_PRIORITY_LOW);
+					currentTime = newTime;
+				}
+				//currentTime = newTime;
+				/*packet = dequeuePacket(Priority.PACKET_PRIORITY_HIGH);		//Try to dequeue high priority
+				if (packet == null) {										//If no high priority, dequeue low priority
+					packet = dequeuePacket(Priority.PACKET_PRIORITY_LOW);
 				}//if
-				currentTime = newTime;
-			}
+				if (packet != null) {
+					currentTime = newTime;
+				}//if*/
+			}//if
+			
 			// It's time to terminate SendConnection
-			if (currentTime - startTime >= (runTime)) {
+			if (newTime - startTime >= (runTime)) {
 				running = false;
 			}//if
 		}//while
 		System.out.println("SendConnection: Terminated...");
 		tellObservers(SERVER_EVENT_TERMINATED);
-		//stats.readEventsFromFile();			//TODO--> shouldn't be called in SendConnection, belongs to simulation environment
 	}//run
 
+	
+	
 	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 // Enqueue and Dequeue methods	
@@ -187,16 +200,22 @@ public class SendConnection extends Observable implements Runnable {
 	 * @return true if a packet is successfully dequeued
 	 * 		   false if no packet is in line
 	 */
-	private Packet dequeuePacket(boolean priority) {
+	private Packet dequeuePacket(Priority priority) {
 		try {
 			Packet packet = null;
-			if (priority == true) {
-				packet = queuePriority.remove();
-				stats.triggerEvent(Event.EVENT_TYPE_DEQUEUE, packet);
-			} else {
-				packet = queueNonPriority.remove();
-				stats.triggerEvent(Event.EVENT_TYPE_DEQUEUE, packet);
-			}//if
+			switch (priority) {
+				case PACKET_PRIORITY_HIGH:
+					packet = queuePriority.remove();
+					stats.triggerEvent(Event.EVENT_TYPE_DEQUEUE, packet);
+					break;
+				case PACKET_PRIORITY_LOW:
+					packet = queueNonPriority.remove();
+					stats.triggerEvent(Event.EVENT_TYPE_DEQUEUE, packet);
+					break;
+				default:
+					break;
+			}//switch
+			
 			System.out.printf("SendConnection: Sending packet %d\n", packet.getId()); //TODO: Output message in calls not in declaration
 			return packet;
 		} catch (NoSuchElementException e) {

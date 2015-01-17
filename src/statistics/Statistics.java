@@ -341,7 +341,7 @@ public class Statistics implements Observer {
 		System.out.printf("\n=== Average Queue Time =============\n");
 		System.out.printf("High Priority Packets:\t%9d µs\n", avrgQueueTimePrio);
 		System.out.printf("Low Priority Packets:\t%9d µs\n", avrgQueueTimeNonPrio);
-		System.out.printf("Total:\t\t%9d µs\n", (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2);	//TODO only if both != 0
+		System.out.printf("Total:\t\t\t%9d µs\n", (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2);	//TODO only if both != 0
 		// If 'µ' is not displayed correctly, go to Eclipse > Preferences > General > Workspace > Text File Encoding
 
 		
