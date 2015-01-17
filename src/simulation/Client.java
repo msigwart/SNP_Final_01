@@ -93,7 +93,7 @@ public class Client extends Thread implements Observer {
 				int packetCounter = 0;
 				long newTime;
 				interval = rig.generateNewRandomInterval();
-				System.out.printf("Client: new Interval: %d\n", interval);
+				//System.out.printf("Client: new Interval: %d\n", interval);
 				
 				while (packetCounter<numOfPackets && running == true) {	//send number of Packets
 					newTime = System.nanoTime();	//get currentTime
@@ -106,9 +106,9 @@ public class Client extends Thread implements Observer {
 						if ( !sendConnection.enqueuePacket(packet, packet.getPriority()) ){			//packet could not be put in server queue
 							System.out.printf("-------> Client %d: Lost packet %d\n", this.clientId, packet.getId());
 						} else {
-							System.out.printf("Client %d: Sent packet %d\n", this.clientId, packet.getId());	//packet successfully reached server queue
+							//System.out.printf("Client %d: Sent packet %d\n", this.clientId, packet.getId());	//packet successfully reached server queue
 							interval = rig.generateNewRandomInterval();
-							System.out.printf("Client %d: new Interval: %d\n", this.clientId, interval);
+							//System.out.printf("Client %d: new Interval: %d\n", this.clientId, interval);
 						}//if
 						packetCounter += 1;
 						currentTime = newTime;
