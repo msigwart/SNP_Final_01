@@ -130,12 +130,14 @@ public class Statistics implements Observer {
 		int eventType;
 		Priority packetPriority;
 		
-		if(strEvent.substring(0, strEvent.indexOf('(')).equalsIgnoreCase("DEQUEUE")){
+		if( strEvent.toLowerCase().contains("DEQUEUE".toLowerCase()) ) {
 			eventType = Event.EVENT_TYPE_DEQUEUE;
 		}//if
-		else{
+		else if ( strEvent.toLowerCase().contains("ENQUEUE".toLowerCase()) ) {
 			eventType = Event.EVENT_TYPE_ENQUEUE;
-		}//else
+		} else {
+			eventType = Event.EVENT_TYPE_UNKNOWN;
+		}//if
 		
 		boolean found = Arrays.asList(strEvent.split(" ")).contains("true"); 		//TODO: Change to enum Priority
 		
