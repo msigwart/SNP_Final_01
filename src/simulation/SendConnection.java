@@ -164,9 +164,11 @@ public class SendConnection extends Observable implements Runnable {
 		boolean success = false;
 		switch (priority) {
 			case PACKET_PRIORITY_HIGH:
+				stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);
 				success = queuePriority.add(packet);
 				break;
 			case PACKET_PRIORITY_LOW:
+				stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);
 				success = queueNonPriority.add(packet);
 				break;
 			default:
@@ -190,8 +192,10 @@ public class SendConnection extends Observable implements Runnable {
 			Packet packet = null;
 			if (priority == true) {
 				packet = queuePriority.remove();
+				stats.triggerEvent(Event.EVENT_TYPE_DEQUEUE, packet);
 			} else {
 				packet = queueNonPriority.remove();
+				stats.triggerEvent(Event.EVENT_TYPE_DEQUEUE, packet);
 			}//if
 			System.out.printf("SendConnection: Sending packet %d\n", packet.getId()); //TODO: Output message in calls not in declaration
 			return packet;

@@ -20,7 +20,7 @@ public class Simulation {
 	public static final int CLIENT_SEND_INTERVAL 		= 100; //microseconds
 	public static final int CLIENT_SEND_MIN_INTERVAL	= 5;
 	public static final int CLIENT_SEND_MAX_INTERVAL	= 1500;
-	public static final int CLIENT_NUM_OF_PACKETS 		= 1000;
+	public static final int CLIENT_NUM_OF_PACKETS 		= 10;
 	public static final int NUM_OF_CLIENTS				= 10;
 	
 	//Server globals
@@ -43,7 +43,7 @@ public class Simulation {
 		System.out.printf( "The time is: %s\n", Time.getTimeStampString());
 
 		// Create Statistics object
-		Statistics stats = new Statistics("output/statTest");
+		Statistics stats = new Statistics("output/ouput.txt");
 		
 		// Create SendConnection
 		SendConnection sc = new SendConnection(SERVER_RUNTIME, SERVER_SEND_SPEED, SERVER_QUEUE_SIZE, stats);

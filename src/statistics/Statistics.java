@@ -25,6 +25,11 @@ public class Statistics implements Observer {
 	
 	private ArrayList<Event> events = new ArrayList<Event>();
 	private String outputFile;
+	
+	private PrintWriter 	pWriter;
+	private FileInputStream	fStream;
+	private BufferedReader 	bReader;
+	
 	private int numFiles;
 	
 	/**
@@ -33,7 +38,8 @@ public class Statistics implements Observer {
 	 */
 	public Statistics(String outputFile) {
 		this.outputFile = outputFile;
-		this.numFiles = this.readNumOfFiles();
+		//this.numFiles = this.readNumOfFiles();
+		initializeStatistics();
 	}//Constructor
 	
 	
@@ -47,41 +53,49 @@ public class Statistics implements Observer {
 	}//createEvent
 	
 	
-	public void writeEventIntoFile(Event event){
-		
+	private void initializeStatistics() {
 		try {
-			System.out.println("trying to write in the file statsTest.txt");
-			String newFileName = outputFile + "_" + numFiles + ".txt";
-			File statText = new File(newFileName);
+			//String newFileName = outputFile + "_" + numFiles + ".txt";
+			File statText = new File(this.outputFile);
 			
-            if(!statText.exists()) {
-            	statText.createNewFile();
-            }
-            
-    		FileWriter fileWritter = new FileWriter(newFileName,true);
-	        BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
-	        bufferWritter.write(event.toString() + "\n");
-	        bufferWritter.close();
-        } catch (IOException e) {
-            System.err.println("Problem writing to the file statsTest.txt");
-        }//catch
+			// Create File
+	        if (!statText.exists()) {
+	        	if (statText.createNewFile()) {
+	        		System.out.printf("Statistics: Created new output file %s\n", outputFile);
+	        	} else {
+	        		System.out.printf("Statistics: Failed to create output file: %s\n", outputFile);
+	        	}//if
+	        }//if
+	        
+	        // Create Print Writer & Buffered Reader
+			this.pWriter = new PrintWriter( new FileOutputStream(this.outputFile) );
+			this.fStream = new FileInputStream(this.outputFile);
+			this.bReader = new BufferedReader( new InputStreamReader(this.fStream) );
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.printf("Statistics: Could not create PrintWriter\n");
+		}//catch
+		
+	}//initializeStatistics
+	
+	
+	private synchronized void writeEventIntoFile(Event event){
+		System.out.printf("Statistics: Writing event into file...");
+		pWriter.printf("%s\n", event.toString());
 	}//writeEventIntoFile
 	
 	
+	
 	public void readEventsFromFile(){
-		String newFileName = outputFile + "_" + numFiles + ".txt";
+		/*String newFileName = outputFile + "_" + numFiles + ".txt";
 		File file = new File(newFileName);
 		FileInputStream fis = null;
 		BufferedReader reader = null;
-		
+		*/
 		try {
-			fis = new FileInputStream(file);
-			reader = new BufferedReader(new InputStreamReader(fis));
+			System.out.printf("Total file size to read (in bytes) : %d\n", fStream.available());
 			
-			System.out.println("Total file size to read (in bytes) : "
-					+ fis.available());
-			
-			String line = reader.readLine();
+			String line = bReader.readLine();
 			
 			while(line != null){
 				Event e = this.createEventFromString(line);
@@ -90,26 +104,25 @@ public class Statistics implements Observer {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
 				else{
-					System.out.printf("Reading event....\n");
+					//System.out.printf("Reading event....\n");
 					System.out.println(e.toString());
 				}//else
-				
-				line = reader.readLine();
+				line = bReader.readLine();
 			}//while
 			
-		} catch (FileNotFoundException ex) {
+		} catch (IOException ex) {
             ex.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		} finally {
 			try {
-				if (fis != null)
-					fis.close();
+				if (fStream != null)
+					fStream.close();
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}//try
-		}//finally
+		}//finally*/
 	}//readEventsFromFile
+	
+	
 	
 	public Event createEventFromString(String strEvent){
 		Event event = null;
@@ -117,8 +130,8 @@ public class Statistics implements Observer {
 		int eventType;
 		Priority packetPriority;
 		
-		if(strEvent.substring(0, strEvent.indexOf('(')).equalsIgnoreCase("DQUEUE")){
-			eventType = Event.EVENT_TYPE_DQUEUE;
+		if(strEvent.substring(0, strEvent.indexOf('(')).equalsIgnoreCase("DEQUEUE")){
+			eventType = Event.EVENT_TYPE_DEQUEUE;
 		}//if
 		else{
 			eventType = Event.EVENT_TYPE_ENQUEUE;
@@ -146,23 +159,33 @@ public class Statistics implements Observer {
 		
 	}//addEventFromString
 	
-	private int readNumOfFiles(){
+	/*private int readNumOfFiles(){
 		return new File("output/").listFiles().length;
-	}
+	}*/
 	
-
-
 	@Override
-	public void update(Observable o, Object arg) {
+	public void update(Observable o, Object arg) {		//OBSERVER PATTERN
 		
 		switch ((int)arg) {
 			case SendConnection.SERVER_EVENT_TERMINATED:
+				pWriter.close();
 				System.out.printf("######################## Statistics ######################### \n");
-				System.out.printf("Collecting statistics...\n");
+				collectStatistics();
 				break;
 			default:
 				break;
 		}//switch
-	}
+	}//update
+	
+	
+	private void collectStatistics() {
+		System.out.printf("Collecting statistics...\n");
+		readEventsFromFile();
+	}//collectingStatistics
+
+
+
+
+
 	
 }//Statistics

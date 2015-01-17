@@ -7,7 +7,7 @@ public class Event {
 	
 	// Global event types
 	public static final int EVENT_TYPE_ENQUEUE = 0;
-	public static final int EVENT_TYPE_DQUEUE = 1;
+	public static final int EVENT_TYPE_DEQUEUE = 1;
 	
 	
 	// Private members
@@ -50,8 +50,8 @@ public class Event {
 	
 	@Override
 	public String toString(){
-		if(eventType == EVENT_TYPE_DQUEUE)
-			return "DQUEUE  at (" + creationTime + "): " + "Packet " + packet.getId() + " - Priority " + packet.getPriority();
+		if(eventType == EVENT_TYPE_DEQUEUE)
+			return "DEQUEUE  at (" + creationTime + "): " + "Packet " + packet.getId() + " - Priority " + packet.getPriority();
 		else{
 			return "ENQUEUE at (" + creationTime + "): " + "Packet " + packet.getId() + " - Priority " + packet.getPriority();
 		}//if	
