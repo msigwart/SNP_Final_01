@@ -32,6 +32,9 @@ public class Statistics implements Observer {
 	
 	private int numFiles;
 	
+	// Different statistics fields
+	private double averageQueueTime;
+	
 	/**
 	 * Creates a new Statistics instance for tracing simulation events
 	 * @param outputFile path to output file (simulation trace)
@@ -39,6 +42,7 @@ public class Statistics implements Observer {
 	public Statistics(String outputFile) {
 		this.outputFile = outputFile;
 		//this.numFiles = this.readNumOfFiles();
+		this.averageQueueTime = 0.0;
 		initializeStatistics();
 	}//Constructor
 	
@@ -53,6 +57,11 @@ public class Statistics implements Observer {
 	}//createEvent
 	
 	
+	/**
+	 * Initializes various fields of Statistics object. Creates a new file if output file does not exist yet.
+	 * Creates PrintWriter to "print" events into output file.
+	 * Creates BufferedReader to read events from output file.
+	 */
 	private void initializeStatistics() {
 		try {
 			//String newFileName = outputFile + "_" + numFiles + ".txt";
@@ -87,14 +96,9 @@ public class Statistics implements Observer {
 	
 	
 	public void readEventsFromFile(){
-		/*String newFileName = outputFile + "_" + numFiles + ".txt";
-		File file = new File(newFileName);
-		FileInputStream fis = null;
-		BufferedReader reader = null;
-		*/
+
 		try {
-			System.out.printf("Total file size to read (in bytes) : %d\n", fStream.available());
-			
+			//System.out.printf("Total file size to read (in bytes) : %d\n", fStream.available());
 			String line = bReader.readLine();
 			
 			while(line != null){
@@ -104,8 +108,7 @@ public class Statistics implements Observer {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
 				else{
-					//System.out.printf("Reading event....\n");
-					System.out.println(e.toString());
+					events.add(e);
 				}//else
 				line = bReader.readLine();
 			}//while
@@ -165,28 +168,97 @@ public class Statistics implements Observer {
 		return new File("output/").listFiles().length;
 	}*/
 	
+	
+	
+	
 	@Override
 	public void update(Observable o, Object arg) {		//OBSERVER PATTERN
 		
 		switch ((int)arg) {
 			case SendConnection.SERVER_EVENT_TERMINATED:
 				pWriter.close();
-				System.out.printf("######################## Statistics ######################### \n");
+				System.out.printf("\n######################## Statistics #########################\n");
 				collectStatistics();
+				printStatistics();
 				break;
 			default:
 				break;
 		}//switch
 	}//update
 	
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Various statistics methods
 	
+	/**
+	 * Called when the Observable(SendConnection) notifies about its termination
+	 * Collects various statistics from the trace (output) file of the simulation
+	 */
 	private void collectStatistics() {
 		System.out.printf("Collecting statistics...\n");
 		readEventsFromFile();
+		//printEvents();
+		averageQueueTime = getAverageQueueTime();
 	}//collectingStatistics
 
 
-
+	/**
+	 * Return the average time spent by packet in the queue
+	 * @return returns the average queue time in microseconds
+	 */
+	private double getAverageQueueTime() {
+		double averageTime = 0.0;
+		return averageTime;
+	}//getAverageQueueTime
+	
+	
+	/**
+	 * Counts the number of events with a certain priority
+	 * @param priority the priority of the events to count
+	 * @return returns the number of events
+	 */
+	private int getEventCount(Priority priority) {
+		int count = 0;
+		for (Event e: events) {
+			if (e.getPacket().getPriority() == priority) {
+				count++;
+			}//if
+		}//for
+		return count;
+	}//getEventCount
+	
+	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Various print methods
+	/**
+	 * Prints all events contained in output file.
+	 */
+	public void printEvents() {
+		for (Event e: events) {
+			System.out.printf("%s\n", e.toString());
+		}//for
+	}//printEvents
+	
+	/**
+	 * Prints all statistics about simulation run in a nice way
+	 */
+	public void printStatistics() {
+		System.out.printf("=== Event Counts ================\n");
+		for (Priority p: Priority.values()) {
+			switch (p) {
+				case PACKET_PRIORITY_HIGH:
+					System.out.printf("High Priority Events:\t%9d\n", getEventCount(p));
+					break;
+				case PACKET_PRIORITY_LOW:
+					System.out.printf("Low Priority Events:\t%9d\n", getEventCount(p));
+					break;
+				default:
+					break;
+			}//switch
+		}
+		System.out.printf("---------------------------------\n" +
+						  "Total Events \t\t%9d\n", events.size());
+	}//printStatistics
 
 
 	
