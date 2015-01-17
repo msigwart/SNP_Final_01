@@ -63,6 +63,8 @@ public class SendConnection extends Observable implements Runnable {
 	private long startTime;
 	private long currentTime;
 	
+	private long progressTime;				//field to display progress during simulation
+	
 
 	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
@@ -84,10 +86,14 @@ public class SendConnection extends Observable implements Runnable {
 	 */
 	SendConnection(int runTime, int speed, int queueSize, Statistics stats) {
 		this.runTime = (long)runTime*Time.NANOSEC_PER_SEC;
+		this.progressTime = this.runTime/100;	//Time per 1 percent progress
 		this.connectionSpeed = speed;
-		//this.queueNonPrio = new Packet[queueSize];
+		
+		//init queues
 		this.queueNonPriority 	= new ConcurrentLinkedQueue<Packet>();
 		this.queuePriority		= new ConcurrentLinkedQueue<Packet>();
+		
+		//init stats
 		this.stats = stats;
 		this.addObserver(stats);
 	}//Constructor
@@ -122,7 +128,11 @@ public class SendConnection extends Observable implements Runnable {
 		if (thread == null || Thread.currentThread() != thread) throw new IllegalStateException();
 		startTime 	= System.nanoTime();			// Get start time
 		currentTime = startTime;
+		int progressPercent = 0;
+		long nextProgress = startTime + progressTime;
 		System.out.println("SendConnection started...");
+		System.out.printf("Simulation Progress:\n");
+
 		
 		long newTime;
 		while (running) {
@@ -150,6 +160,20 @@ public class SendConnection extends Observable implements Runnable {
 				}//if*/
 			}//if
 			
+			//Display progress
+			if (newTime >= nextProgress) {
+				progressPercent++;	
+				nextProgress += progressTime;			//set next progress time (old + time per 1% progress)
+				//System.out.print("\r");				//Does not work as desired--> Eclipse Bug: https://bugs.eclipse.org/bugs/show_bug.cgi?id=76936
+				/*for (int i=0; i<progressPercent; i++) {
+					System.out.print("#");
+				}//for
+				for (int i=progressPercent; i<100; i++) {
+					System.out.print(" ");
+				}//for*/
+				System.out.printf("%d Percent....\n", progressPercent);
+			}//if
+			
 			// It's time to terminate SendConnection
 			if (newTime - startTime >= (runTime)) {
 				running = false;
@@ -173,7 +197,7 @@ public class SendConnection extends Observable implements Runnable {
 	 * 		   false if a packet could not be enqueued --> Queue full?
 	 */
 	public boolean enqueuePacket(Packet packet, Priority priority) {
-		System.out.printf("SendConnection: received packet %d\n", packet.getId());		//TODO: Output message in calls not in declaration
+		//System.out.printf("SendConnection: received packet %d\n", packet.getId());		//TODO: Output message in calls not in declaration
 		boolean success = false;
 		switch (priority) {
 			case PACKET_PRIORITY_HIGH:
@@ -215,8 +239,7 @@ public class SendConnection extends Observable implements Runnable {
 				default:
 					break;
 			}//switch
-			
-			System.out.printf("SendConnection: Sending packet %d\n", packet.getId()); //TODO: Output message in calls not in declaration
+			//System.out.printf("SendConnection: Sending packet %d\n", packet.getId()); //TODO: Output message in calls not in declaration
 			return packet;
 		} catch (NoSuchElementException e) {
 			//System.out.printf("SendConnection: No Element in Queue...\n");
