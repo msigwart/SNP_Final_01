@@ -33,7 +33,8 @@ public class Statistics implements Observer {
 	private int numFiles;
 	
 	// Different statistics fields
-	private ArrayList<Event> events = new ArrayList<Event>();
+	private ArrayList<Event> eventsNonPrio 	= new ArrayList<Event>();
+	private ArrayList<Event> eventsPrio		= new ArrayList<Event>();
 	private long averageQueueTime;
 	
 	/**
@@ -109,7 +110,7 @@ public class Statistics implements Observer {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
 				else{
-					events.add(e);
+					eventsNonPrio.add(e);
 				}//else
 				line = bReader.readLine();
 			}//while
@@ -211,9 +212,9 @@ public class Statistics implements Observer {
 		long sumQueueTime = 0L;
 		int eventCount = 0;
 		
-		for (Event en: events) {
+		for (Event en: eventsNonPrio) {
 			if (en.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
-				for (Event de: events) {
+				for (Event de: eventsNonPrio) {
 					if (de.getEventType() == Event.EVENT_TYPE_DEQUEUE && de.getPacket().getId() == en.getPacket().getId()) {
 						sumQueueTime += de.getCreationTime() - en.getCreationTime();
 						eventCount++;
@@ -232,13 +233,27 @@ public class Statistics implements Observer {
 	 * @param priority the priority of the events to count
 	 * @return returns the number of events
 	 */
-	private int getEventCount(Priority priority) {
+	private int getEventCount(Priority priority, int eventType) {
 		int count = 0;
-		for (Event e: events) {
-			if (e.getPacket().getPriority() == priority) {
-				count++;
-			}//if
-		}//for
+		switch (priority) {
+			case PACKET_PRIORITY_HIGH:
+				for (Event e: eventsPrio) {
+					if (e.getEventType() == eventType) {
+						count++;
+					}//if
+				}//for
+				break;
+			case PACKET_PRIORITY_LOW:
+				for (Event e: eventsNonPrio) {
+					if (e.getEventType() == eventType) {
+						count++;
+					}//if
+				}//for
+				break;
+			default:
+				break;
+		}//switch
+
 		return count;
 	}//getEventCount
 	
@@ -249,7 +264,7 @@ public class Statistics implements Observer {
 	 * Prints all events contained in output file.
 	 */
 	public void printEvents() {
-		for (Event e: events) {
+		for (Event e: eventsNonPrio) {
 			System.out.printf("%s\n", e.toString());
 		}//for
 	}//printEvents
@@ -258,21 +273,33 @@ public class Statistics implements Observer {
 	 * Prints all statistics about simulation run in a nice way
 	 */
 	public void printStatistics() {
+		int enqueuePrio = 0;		//local variable for enqueueEvent count
+		int dequeuePrio = 0;		//local variable for dequeueEvent count
+		int enqueueNonPrio = 0;		//local variable for enqueueEvent count
+		int dequeueNonPrio = 0;		//local variable for dequeueEvent count
+		
 		System.out.printf("\n=== Event Counts ================\n");
+		System.out.printf("\n\t\t\t ENQUEUE:\t DEQUEUE:\t|    TOTAL:\n" +
+				"--------------------------------------------------------+-----------\n");
 		for (Priority p: Priority.values()) {
+
 			switch (p) {
 				case PACKET_PRIORITY_HIGH:
-					System.out.printf("High Priority Events:\t%9d\n", getEventCount(p));
+					enqueuePrio = getEventCount(Priority.PACKET_PRIORITY_HIGH, Event.EVENT_TYPE_ENQUEUE);
+					dequeuePrio = getEventCount(Priority.PACKET_PRIORITY_HIGH, Event.EVENT_TYPE_DEQUEUE);
+					System.out.printf("High Priority Events:\t%9d\t%9d\t| %9d\n", enqueuePrio, dequeuePrio, enqueuePrio+dequeuePrio);
 					break;
 				case PACKET_PRIORITY_LOW:
-					System.out.printf("Low Priority Events:\t%9d\n", getEventCount(p));
+					enqueueNonPrio = getEventCount(Priority.PACKET_PRIORITY_LOW, Event.EVENT_TYPE_ENQUEUE);
+					dequeueNonPrio = getEventCount(Priority.PACKET_PRIORITY_LOW, Event.EVENT_TYPE_DEQUEUE);
+					System.out.printf("Low Priority Events:\t%9d\t%9d\t| %9d\n", enqueueNonPrio, dequeueNonPrio, enqueueNonPrio+dequeueNonPrio);
 					break;
 				default:
 					break;
 			}//switch
 		}//for
-		System.out.printf("---------------------------------\n" +
-						  "Total Events \t\t%9d\n", events.size());
+		System.out.printf("========================================================+===========\n" +
+						  "Total Events \t\t%9d\t%9d\t| %9d\n", enqueuePrio+enqueueNonPrio, dequeuePrio+dequeueNonPrio, eventsNonPrio.size()+eventsPrio.size());
 		
 		System.out.printf("\n=== Average Queue Time ==========\n");
 		System.out.printf("Average Queue Time:\t%9d\n", averageQueueTime);

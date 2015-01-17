@@ -24,7 +24,7 @@ public class Simulation {
 	public static final int NUM_OF_CLIENTS				= 2;
 	
 	//Server globals
-	public static final int SERVER_RUNTIME 				= 15; //seconds
+	public static final int SERVER_RUNTIME 				= 5; //seconds
 	public static final int SERVER_SEND_SPEED			= 1000; //Mbs
 	//public static final long SERVER_SEND_SPEED_MICRO	= SERVER_SEND_SPEED*1000000;
 	public static final long MICSECONDS_PER_PACKET		= PACKET_SIZE_BITS/SERVER_SEND_SPEED;
