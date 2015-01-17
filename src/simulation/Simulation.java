@@ -20,12 +20,12 @@ public class Simulation {
 	public static final int CLIENT_SEND_INTERVAL 		= 100; //microseconds
 	public static final int CLIENT_SEND_MIN_INTERVAL	= 5;
 	public static final int CLIENT_SEND_MAX_INTERVAL	= 1500;
-	public static final int CLIENT_NUM_OF_PACKETS 		= 10;
-	public static final int NUM_OF_CLIENTS				= 10;
+	public static final int CLIENT_NUM_OF_PACKETS 		= 10000;
+	public static final int NUM_OF_CLIENTS				= 2;
 	
 	//Server globals
-	public static final int SERVER_RUNTIME 				= 5; //seconds
-	public static final int SERVER_SEND_SPEED			= 100; //Mbs
+	public static final int SERVER_RUNTIME 				= 15; //seconds
+	public static final int SERVER_SEND_SPEED			= 1000; //Mbs
 	//public static final long SERVER_SEND_SPEED_MICRO	= SERVER_SEND_SPEED*1000000;
 	public static final long MICSECONDS_PER_PACKET		= PACKET_SIZE_BITS/SERVER_SEND_SPEED;
 	public static final int SERVER_QUEUE_SIZE 			= 1000000;

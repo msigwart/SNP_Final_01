@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import simulation.Packet;
 import simulation.Priority;
 import simulation.SendConnection;
+import simulation.Time;
 
 
 /**
@@ -23,7 +24,6 @@ import simulation.SendConnection;
  */
 public class Statistics implements Observer {
 	
-	private ArrayList<Event> events = new ArrayList<Event>();
 	private String outputFile;
 	
 	private PrintWriter 	pWriter;
@@ -33,7 +33,8 @@ public class Statistics implements Observer {
 	private int numFiles;
 	
 	// Different statistics fields
-	private double averageQueueTime;
+	private ArrayList<Event> events = new ArrayList<Event>();
+	private long averageQueueTime;
 	
 	/**
 	 * Creates a new Statistics instance for tracing simulation events
@@ -42,7 +43,7 @@ public class Statistics implements Observer {
 	public Statistics(String outputFile) {
 		this.outputFile = outputFile;
 		//this.numFiles = this.readNumOfFiles();
-		this.averageQueueTime = 0.0;
+		this.averageQueueTime = 0L;
 		initializeStatistics();
 	}//Constructor
 	
@@ -89,7 +90,7 @@ public class Statistics implements Observer {
 	
 	
 	private synchronized void writeEventIntoFile(Event event){
-		System.out.printf("Statistics: Writing event into file...");
+		//System.out.printf("Statistics: Writing event into file...");
 		pWriter.printf("%s\n", event.toString());
 	}//writeEventIntoFile
 	
@@ -206,9 +207,23 @@ public class Statistics implements Observer {
 	 * Return the average time spent by packet in the queue
 	 * @return returns the average queue time in microseconds
 	 */
-	private double getAverageQueueTime() {
-		double averageTime = 0.0;
-		return averageTime;
+	private long getAverageQueueTime() {
+		long sumQueueTime = 0L;
+		int eventCount = 0;
+		
+		for (Event en: events) {
+			if (en.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
+				for (Event de: events) {
+					if (de.getEventType() == Event.EVENT_TYPE_DEQUEUE && de.getPacket().getId() == en.getPacket().getId()) {
+						sumQueueTime += de.getCreationTime() - en.getCreationTime();
+						eventCount++;
+						break;
+					}//if
+				}//for
+			}//if
+		}//for
+		
+		return (sumQueueTime/eventCount)/Time.NANOSEC_PER_MICROSEC;
 	}//getAverageQueueTime
 	
 	
@@ -243,7 +258,7 @@ public class Statistics implements Observer {
 	 * Prints all statistics about simulation run in a nice way
 	 */
 	public void printStatistics() {
-		System.out.printf("=== Event Counts ================\n");
+		System.out.printf("\n=== Event Counts ================\n");
 		for (Priority p: Priority.values()) {
 			switch (p) {
 				case PACKET_PRIORITY_HIGH:
@@ -255,9 +270,14 @@ public class Statistics implements Observer {
 				default:
 					break;
 			}//switch
-		}
+		}//for
 		System.out.printf("---------------------------------\n" +
 						  "Total Events \t\t%9d\n", events.size());
+		
+		System.out.printf("\n=== Average Queue Time ==========\n");
+		System.out.printf("Average Queue Time:\t%9d\n", averageQueueTime);
+
+		
 	}//printStatistics
 
 
