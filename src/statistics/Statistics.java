@@ -34,9 +34,14 @@ public class Statistics implements Observer {
 	
 	// Different statistics fields
 	private ArrayList<Event> eventsNonPrio 	= new ArrayList<Event>();
+	private long avrgQueueTimeNonPrio;
+	private int enEventsNonPrio;
+	private int deEventsNonPrio;
+	
 	private ArrayList<Event> eventsPrio		= new ArrayList<Event>();
 	private long avrgQueueTimePrio;
-	private long avrgQueueTimeNonPrio;
+	private int enEventsPrio;
+	private int deEventsPrio;
 	
 	/**
 	 * Creates a new Statistics instance for tracing simulation events
@@ -47,6 +52,10 @@ public class Statistics implements Observer {
 		//this.numFiles = this.readNumOfFiles();
 		this.avrgQueueTimePrio = 0L;
 		this.avrgQueueTimeNonPrio = 0L;
+		this.enEventsNonPrio = 0;
+		this.deEventsNonPrio = 0;
+		this.enEventsPrio = 0;
+		this.deEventsPrio = 0;
 		initializeStatistics();
 	}//Constructor
 	
@@ -95,6 +104,31 @@ public class Statistics implements Observer {
 	private synchronized void writeEventIntoFile(Event event){
 		//System.out.printf("Statistics: Writing event into file...");
 		pWriter.printf("%s\n", event.toString());
+		
+		//do some statistics work
+		switch (event.getEventType()) {
+		
+			case Event.EVENT_TYPE_ENQUEUE:
+				switch (event.getPacket().getPriority()) {
+					case PACKET_PRIORITY_HIGH:	enEventsPrio++;		break;
+					case PACKET_PRIORITY_LOW:  	enEventsNonPrio++;	break;
+					default: break;
+				}//switch
+				break;
+				
+			case Event.EVENT_TYPE_DEQUEUE:
+				switch (event.getPacket().getPriority()) {
+					case PACKET_PRIORITY_HIGH:	deEventsPrio++;		break;
+					case PACKET_PRIORITY_LOW:	deEventsNonPrio++;	break;
+					default: break;
+				}//switch
+				break;
+				
+			case Event.EVENT_TYPE_UNKNOWN:
+				break;
+			default:
+				break;
+		}//switch
 	}//writeEventIntoFile
 	
 	
@@ -294,6 +328,16 @@ public class Statistics implements Observer {
 		return count;
 	}//getEventCount
 	
+	public void countAllEvents() {
+		// High Priority
+		enEventsPrio = getEventCount(Priority.PACKET_PRIORITY_HIGH, Event.EVENT_TYPE_ENQUEUE);
+		deEventsPrio = getEventCount(Priority.PACKET_PRIORITY_HIGH, Event.EVENT_TYPE_DEQUEUE);
+		
+		// Low Priority
+		enEventsNonPrio = getEventCount(Priority.PACKET_PRIORITY_LOW, Event.EVENT_TYPE_ENQUEUE);
+		deEventsNonPrio = getEventCount(Priority.PACKET_PRIORITY_LOW, Event.EVENT_TYPE_DEQUEUE);
+	}//countAllEvents
+	
 	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 // Various print methods
@@ -310,10 +354,6 @@ public class Statistics implements Observer {
 	 * Prints all statistics about simulation run in a nice way
 	 */
 	public void printStatistics() {
-		int enqueuePrio = 0;		//local variable for enqueueEvent count
-		int dequeuePrio = 0;		//local variable for dequeueEvent count
-		int enqueueNonPrio = 0;		//local variable for enqueueEvent count
-		int dequeueNonPrio = 0;		//local variable for dequeueEvent count
 		
 		System.out.printf("\n=== Event Counts ================\n");
 		System.out.printf("\n\t\t\t ENQUEUE:\t DEQUEUE:\t|    TOTAL:\n" +
@@ -322,21 +362,17 @@ public class Statistics implements Observer {
 
 			switch (p) {
 				case PACKET_PRIORITY_HIGH:
-					enqueuePrio = getEventCount(Priority.PACKET_PRIORITY_HIGH, Event.EVENT_TYPE_ENQUEUE);
-					dequeuePrio = getEventCount(Priority.PACKET_PRIORITY_HIGH, Event.EVENT_TYPE_DEQUEUE);
-					System.out.printf("High Priority Events:\t%9d\t%9d\t| %9d\n", enqueuePrio, dequeuePrio, enqueuePrio+dequeuePrio);
+					System.out.printf("High Priority Events:\t%9d\t%9d\t| %9d\n", enEventsPrio, deEventsPrio, enEventsPrio+deEventsPrio);
 					break;
 				case PACKET_PRIORITY_LOW:
-					enqueueNonPrio = getEventCount(Priority.PACKET_PRIORITY_LOW, Event.EVENT_TYPE_ENQUEUE);
-					dequeueNonPrio = getEventCount(Priority.PACKET_PRIORITY_LOW, Event.EVENT_TYPE_DEQUEUE);
-					System.out.printf("Low Priority Events:\t%9d\t%9d\t| %9d\n", enqueueNonPrio, dequeueNonPrio, enqueueNonPrio+dequeueNonPrio);
+					System.out.printf("Low Priority Events:\t%9d\t%9d\t| %9d\n", enEventsNonPrio, deEventsNonPrio, enEventsNonPrio+deEventsNonPrio);
 					break;
 				default:
 					break;
 			}//switch
 		}//for
 		System.out.printf("========================================================+===========\n" +
-						  "Total Events \t\t%9d\t%9d\t| %9d\n", enqueuePrio+enqueueNonPrio, dequeuePrio+dequeueNonPrio, eventsNonPrio.size()+eventsPrio.size());
+						  "Total Events \t\t%9d\t%9d\t| %9d\n", enEventsPrio+enEventsNonPrio, deEventsPrio+deEventsNonPrio, eventsNonPrio.size()+eventsPrio.size());
 		
 		System.out.printf("\n=== Average Queue Time =============\n");
 		System.out.printf("High Priority Packets:\t%9d µs\n", avrgQueueTimePrio);
