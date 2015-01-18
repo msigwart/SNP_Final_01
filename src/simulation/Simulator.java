@@ -180,7 +180,6 @@ public class Simulator implements Observer{
 	public void update(Observable arg0, Object arg1) {
 		switch ((int)arg1) {
 			case SendConnection.SERVER_EVENT_TERMINATED:
-				System.out.printf("\n######################## Statistics #########################\n");
 				stats.printStatistics();
 				running = false;
 				break;
