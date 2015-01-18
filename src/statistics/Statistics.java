@@ -364,7 +364,6 @@ public class Statistics implements Observer {
 		switch ((int)arg) {
 			case SendConnection.SERVER_EVENT_TERMINATED:
 				pWriter.close();
-				System.out.printf("\n######################## Statistics #########################\n");
 				//collectStatistics();
 				printStatistics();
 				break;
@@ -504,8 +503,16 @@ public class Statistics implements Observer {
 	 */
 	public void printStatistics() {
 		
-		System.out.printf("\n=== Event Counts ================\n");
-		System.out.printf("\n\t\t\t ENQUEUE:\t DEQUEUE:\t|    TOTAL:\n" +
+		System.out.printf("\n############### Statistics ##########################################\n");
+		printEventStatistics();
+		printQueueStatistics();
+		printPacketStatistics();
+		
+	}//printStatistics
+	
+	public void printEventStatistics() {
+		printStatTitle("Event Counts");
+		System.out.printf("\t\t\t ENQUEUE:\t DEQUEUE:\t|    TOTAL:\n" +
 				"--------------------------------------------------------+-----------\n");
 		for (Priority p: Priority.values()) {
 
@@ -521,27 +528,24 @@ public class Statistics implements Observer {
 			}//switch
 		}//for
 		System.out.printf("========================================================+===========\n" +
-						  "Total Events \t\t%9d\t%9d\t| %9d\n", enEventsPrio+enEventsNonPrio, deEventsPrio+deEventsNonPrio, eventsNonPrio.size()+eventsPrio.size());
+						  "Total Events \t\t%9d\t%9d\t| %9d\n\n", enEventsPrio+enEventsNonPrio, deEventsPrio+deEventsNonPrio, eventsNonPrio.size()+eventsPrio.size());
 		
-		System.out.printf("\n=== Average Queue Time =============\n");
+	}//printEventStatistics
+	
+	public void printQueueStatistics() {
+		printStatTitle("Queue Time");
 		System.out.printf("High Priority Packets:\t%9d µs\n", avrgQueueTimePrio/Time.NANOSEC_PER_MICROSEC);
 		System.out.printf("Low Priority Packets:\t%9d µs\n", avrgQueueTimeNonPrio/Time.NANOSEC_PER_MICROSEC);
-		System.out.printf("Total:\t\t\t%9d µs\n", ( (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2) / Time.NANOSEC_PER_MICROSEC );	//TODO only if both != 0
-		// If 'µ' is not displayed correctly, go to Eclipse > Preferences > General > Workspace > Text File Encoding
-		
-		printPacketStatistics();
-		
-	}//printStatistics
-	
+		System.out.printf("Total:\t\t\t%9d µs\n\n", ( (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2) / Time.NANOSEC_PER_MICROSEC );	//TODO only if both != 0
+		// If 'µ' is not displayed correctly, go to Eclipse > Preferences > General > Workspace > Text File Encoding	
+	}//printQueueStatistics
 	
 	
 	public void printPacketStatistics() {
-		System.out.printf("\n=== Packet Counts =============\n", DEFAULT_DELAY);
-		System.out.printf("\nNumber of packets with a delay of more than %d\n", DEFAULT_DELAY);
-		System.out.printf("High Priority Packets:\t%9d\n", countPrioDelayed);		
-		System.out.printf("Low Priority Packets:\t%9d\n", countNonPrioDelayed);
+		printStatTitle("Packet Count");
+		System.out.printf("Packets with delay of %d microseconds:\n", DEFAULT_DELAY);
 		
-		System.out.printf("\n\t\t\t Delayed:\t Total:\t|    Delayed percentage:\n" +
+		System.out.printf("\n\t\t\t Delayed:\t    Total:\t| Percentage:\n" +
 				"--------------------------------------------------------+-----------\n");
 		for (Priority p: Priority.values()) {
 
@@ -561,6 +565,11 @@ public class Statistics implements Observer {
 						  										deEventsPrio+deEventsNonPrio, 
 						  										percAllDelayed*100);
 	}//printPacketStatistics
+	
+	
+	private void printStatTitle(String statTitle) {
+		System.out.printf("\n=== %-12s ====================================================\n\n", statTitle);
+	}//
 
 
 	
