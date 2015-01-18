@@ -144,7 +144,7 @@ public class SendConnection extends Observable implements Runnable {
 				//dequeuePacket();
 				Packet packet = null;
 				if ( !queuePriority.isEmpty() ) {
-					packet = dequeuePacket(Priority.PACKET_PRIORITY_HIGH);			//TODO: Change to enum Priority
+					packet = dequeuePacket(Priority.PACKET_PRIORITY_HIGH);
 					currentTime = newTime;
 				} else if ( !queueNonPriority.isEmpty() ) {
 					packet = dequeuePacket(Priority.PACKET_PRIORITY_LOW);
@@ -199,13 +199,13 @@ public class SendConnection extends Observable implements Runnable {
 	public boolean enqueuePacket(Packet packet, Priority priority) {
 		//System.out.printf("SendConnection: received packet %d\n", packet.getId());		//TODO: Output message in calls not in declaration
 		boolean success = false;
+		stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);
 		switch (priority) {
 			case PACKET_PRIORITY_HIGH:
-				stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);
 				success = queuePriority.add(packet);
 				break;
 			case PACKET_PRIORITY_LOW:
-				stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);
+				//stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);
 				success = queueNonPriority.add(packet);
 				break;
 			default:

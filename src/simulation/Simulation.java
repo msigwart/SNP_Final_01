@@ -18,15 +18,15 @@ public class Simulation {
 	
 	//Client globals
 	public static final int CLIENT_SEND_INTERVAL 		= 100; //microseconds
-	public static final int CLIENT_SEND_MIN_INTERVAL	= 10;
-	public static final int CLIENT_SEND_MAX_INTERVAL	= 1000;
-	public static final int CLIENT_NUM_OF_PACKETS 		= 10000;
-	public static final int NUM_OF_CLIENTS				= 4;
+	public static final int CLIENT_SEND_MIN_INTERVAL	= 123;
+	public static final int CLIENT_SEND_MAX_INTERVAL	= 123;
+	public static final int CLIENT_NUM_OF_PACKETS 		= 100000;
+	public static final int NUM_OF_CLIENTS				= 1;
 	public static final int NUM_OF_PRIORITY_CLIENTS		= 1;
 	
 	//Server globals
-	public static final int SERVER_RUNTIME 				= 10; //seconds
-	public static final int SERVER_SEND_SPEED			= 1000; //Mbs
+	public static final int SERVER_RUNTIME 				= 20; //seconds
+	public static final int SERVER_SEND_SPEED			= 100; //Mbs
 	//public static final long SERVER_SEND_SPEED_MICRO	= SERVER_SEND_SPEED*1000000;
 	public static final long MICSECONDS_PER_PACKET		= PACKET_SIZE_BITS/SERVER_SEND_SPEED;		//ca. 122 µs/Packet
 	public static final int SERVER_QUEUE_SIZE 			= 1000000;
@@ -41,7 +41,10 @@ public class Simulation {
 	 */
 	public static void main(String[] args) {
 		System.out.printf("Hello Simulator\n");
-		System.out.printf( "The time is: %s\n", Time.getTimeStampString());
+		System.out.printf("The time is: %s\n", Time.getTimeStampString());
+		System.out.printf("Server Send Speed: %d Mbs\n", SERVER_SEND_SPEED);
+		System.out.printf("µs/Packet: %d µs\n", MICSECONDS_PER_PACKET);
+
 
 		// Create Statistics object
 		Statistics stats = new Statistics("output/ouput.txt");

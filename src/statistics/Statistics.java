@@ -511,7 +511,7 @@ public class Statistics implements Observer {
 	}//printStatistics
 	
 	public void printEventStatistics() {
-		printStatTitle("Event Counts");
+		printStatTitle("Event Counts:");
 		System.out.printf("\t\t\t ENQUEUE:\t DEQUEUE:\t|    TOTAL:\n" +
 				"--------------------------------------------------------+-----------\n");
 		for (Priority p: Priority.values()) {
@@ -533,7 +533,7 @@ public class Statistics implements Observer {
 	}//printEventStatistics
 	
 	public void printQueueStatistics() {
-		printStatTitle("Queue Time");
+		printStatTitle("Queue Time:");
 		System.out.printf("High Priority Packets:\t%9d µs\n", avrgQueueTimePrio/Time.NANOSEC_PER_MICROSEC);
 		System.out.printf("Low Priority Packets:\t%9d µs\n", avrgQueueTimeNonPrio/Time.NANOSEC_PER_MICROSEC);
 		System.out.printf("Total:\t\t\t%9d µs\n\n", ( (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2) / Time.NANOSEC_PER_MICROSEC );	//TODO only if both != 0
@@ -542,7 +542,7 @@ public class Statistics implements Observer {
 	
 	
 	public void printPacketStatistics() {
-		printStatTitle("Packet Count");
+		printStatTitle("Packet Count:");
 		System.out.printf("Packets with delay of %d microseconds:\n", DEFAULT_DELAY);
 		
 		System.out.printf("\n\t\t\t Delayed:\t    Total:\t| Percentage:\n" +
@@ -568,7 +568,8 @@ public class Statistics implements Observer {
 	
 	
 	private void printStatTitle(String statTitle) {
-		System.out.printf("\n=== %-12s ====================================================\n\n", statTitle);
+		//System.out.printf("\n=== %-12s ====================================================\n\n", statTitle);
+		System.out.printf("\n>>>>>>>>>> %-12s <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n", statTitle);
 	}//
 
 
