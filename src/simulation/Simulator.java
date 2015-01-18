@@ -3,22 +3,25 @@ package simulation;
 import statistics.Statistics;
 
 public class Simulator {
+	
+	//Packet default globals
 	public static final int PACKET_SIZE_BYTES = 1526; //bytes
 	public static final int PACKET_SIZE_BITS = PACKET_SIZE_BYTES*8;
 	
-	//Default values for the simulation
-	public static final int DEFAULT_CLIENT_SEND_INTERVAL 		= 100; //microseconds
-	public static final int DEFAULT_CLIENT_SEND_MIN_INTERVAL	= 10;
-	public static final int DEFAULT_CLIENT_SEND_MAX_INTERVAL	= 1000;
-	public static final int DEFAULT_CLIENT_NUM_OF_PACKETS 		= 10000;
-	public static final int DEFAULT_NUM_OF_CLIENTS				= 4;
-	public static final int DEFAULT_NUM_OF_PRIORITY_CLIENTS		= 1;
+	//Client default globals
+	private static int DEFAULT_CLIENT_SEND_INTERVAL 	= 100; //microseconds
+	private static int DEFAULT_CLIENT_SEND_MIN_INTERVAL	= 10;
+	private static int DEFAULT_CLIENT_SEND_MAX_INTERVAL	= 1000;
+	private static int DEFAULT_CLIENT_NUM_OF_PACKETS 	= 10000;
+	private static int DEFAULT_NUM_OF_CLIENTS			= 4;
+	private static int DEFAULT_NUM_OF_PRIORITY_CLIENTS	= 1;
 	
-	//Server globals
-	public static final int DEFAULT_SERVER_RUNTIME 				= 10; //seconds
-	public static final int DEFAULT_SERVER_SEND_SPEED			= 1000; //Mbs
-	public static final int DEFAULT_SERVER_QUEUE_SIZE 			= 1000000;
+	//Server default globals
+	private static int DEFAULT_SERVER_RUNTIME 			= 10; //seconds
+	private static int DEFAULT_SERVER_SEND_SPEED		= 1000; //Mbs
+	private static int DEFAULT_SERVER_QUEUE_SIZE 		= 1000000;
 	
+	//Private Members
 	private final int clientSendInterval;
 	private final int clientSendMinInterval;
 	private final int clientSendMaxInterval;
@@ -32,10 +35,43 @@ public class Simulator {
 	
 	private final Simulation simulation = null;
 	
+	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+	// Constructors	
+	
+	Simulator(){
+		this(DEFAULT_CLIENT_SEND_INTERVAL, DEFAULT_CLIENT_SEND_MIN_INTERVAL, DEFAULT_CLIENT_SEND_MAX_INTERVAL,
+				DEFAULT_CLIENT_NUM_OF_PACKETS, DEFAULT_NUM_OF_CLIENTS, DEFAULT_NUM_OF_PRIORITY_CLIENTS, DEFAULT_SERVER_RUNTIME, DEFAULT_SERVER_SEND_SPEED, 
+				DEFAULT_SERVER_QUEUE_SIZE);
+	}//Constructor
+	
 	Simulator(int numClients, int numProrityClients){
 		this(DEFAULT_CLIENT_SEND_INTERVAL, DEFAULT_CLIENT_SEND_MIN_INTERVAL, DEFAULT_CLIENT_SEND_MAX_INTERVAL,
 				DEFAULT_CLIENT_NUM_OF_PACKETS, numClients, numProrityClients, DEFAULT_SERVER_RUNTIME, DEFAULT_SERVER_SEND_SPEED, 
 				DEFAULT_SERVER_QUEUE_SIZE);
+	}//Constructor
+	
+	Simulator(int numClients, int numProrityClients, int clientNumPackets){
+		this(DEFAULT_CLIENT_SEND_INTERVAL, DEFAULT_CLIENT_SEND_MIN_INTERVAL, DEFAULT_CLIENT_SEND_MAX_INTERVAL,
+				clientNumPackets, numClients, numProrityClients, DEFAULT_SERVER_RUNTIME, DEFAULT_SERVER_SEND_SPEED, 
+				DEFAULT_SERVER_QUEUE_SIZE);
+	}//Constructor
+	
+	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int serverRuntime, int serverSendSpeed){
+		this(DEFAULT_CLIENT_SEND_INTERVAL, clientSendMinInterval, clientSendMaxInterval,
+				DEFAULT_CLIENT_NUM_OF_PACKETS, DEFAULT_NUM_OF_CLIENTS, DEFAULT_NUM_OF_PRIORITY_CLIENTS, serverRuntime, serverSendSpeed, 
+				DEFAULT_SERVER_QUEUE_SIZE);
+	}//Constructor
+	
+	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int serverRuntime, int serverSendSpeed){
+		this(DEFAULT_CLIENT_SEND_INTERVAL, clientSendMinInterval, clientSendMaxInterval,
+				clientNumPackets, DEFAULT_NUM_OF_CLIENTS, DEFAULT_NUM_OF_PRIORITY_CLIENTS, serverRuntime, serverSendSpeed, 
+				DEFAULT_SERVER_QUEUE_SIZE);
+	}//Constructor
+	
+	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int serverRuntime, int serverSendSpeed, int serverQueueSize){
+		this(DEFAULT_CLIENT_SEND_INTERVAL, clientSendMinInterval, clientSendMaxInterval,
+				clientNumPackets, DEFAULT_NUM_OF_CLIENTS, DEFAULT_NUM_OF_PRIORITY_CLIENTS, serverRuntime, serverSendSpeed, 
+				serverQueueSize);
 	}//Constructor
 	
 	Simulator(int clientSendInterval, int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int numClients, int numPriorityClients,
@@ -51,6 +87,9 @@ public class Simulator {
 		this.micSecondsPerPacket = PACKET_SIZE_BITS/serverSendSpeed;
 		this.serverQueueSize = serverQueueSize;
 	}//Constructor
+	
+	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+	// Methods
 	
 	public void runSimulation(){
 		
@@ -88,4 +127,39 @@ public class Simulator {
 		}//for
 		
 	}//runSimulation
+	
+	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+	// Setters
+	
+	public static void setDefaultClientSendMinInterval(int defaultClientMinInterval){
+		DEFAULT_CLIENT_SEND_MIN_INTERVAL = defaultClientMinInterval;
+	}//setDefaultClientSendMinInterval
+	
+	public static void setDefaultClientSendMaxInterval(int defaultClientMaxInterval){
+		DEFAULT_CLIENT_SEND_MAX_INTERVAL = defaultClientMaxInterval;
+	}//setDefaultClientSendMaxInterval
+	
+	public static void setDefaultClientNumPackets(int defaultClientNumPackets){
+		DEFAULT_CLIENT_NUM_OF_PACKETS = defaultClientNumPackets;
+	}//setDefaultClientNumPackets
+	
+	public static void setDefaultNumClients(int defaultNumClient){
+		DEFAULT_NUM_OF_CLIENTS = defaultNumClient;
+	}//setDefaultNumClients
+	
+	public static void setDefaultNumPriorityClients(int defaultNumPriorityClients){
+		DEFAULT_NUM_OF_PRIORITY_CLIENTS = defaultNumPriorityClients;
+	}//setDefaultNumPriorityClients
+	
+	public static void setDefaultServerRuntime(int defaultServerRuntime){
+		DEFAULT_SERVER_RUNTIME = defaultServerRuntime;
+	}//setDefaultServerRuntime
+	
+	public static void setDefaultServerSendSpeed(int defaultServerSendSpeed){
+		DEFAULT_SERVER_SEND_SPEED = defaultServerSendSpeed;
+	}//setDefaultServerSendSpeed
+	
+	public static void setDefaultServerQueueSize(int defaultServerQueueSize){
+		DEFAULT_SERVER_QUEUE_SIZE = defaultServerQueueSize;
+	}//setDefaultServerQueueSize
 }
