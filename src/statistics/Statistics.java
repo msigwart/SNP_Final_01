@@ -1,15 +1,10 @@
 package statistics;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.io.*;
-import java.nio.file.Files;
 
 import simulation.Packet;
 import simulation.Priority;
@@ -26,59 +21,73 @@ import simulation.Time;
  */
 public class Statistics implements Observer {
 	
+	public static final int DEFAULT_DELAY = 200;//Microseconds
+	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Fields for file I/O
 	private String outputFile;
 	
 	private PrintWriter 	pWriter;
 	private FileInputStream	fStream;
 	private BufferedReader 	bReader;
 	
-	private int numFiles;
 	
-	// Different statistics fields
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
+// Different statistics fields
+	
 	//private ArrayList<Event> eventsNonPrio 	= new ArrayList<Event>();
 	private CopyOnWriteArrayList<Event> eventsNonPrio 	= new CopyOnWriteArrayList<Event>();	// TODO--> better concurrent collection (ArrayList not concurrent)
 	private long avrgQueueTimeNonPrio;			// average queuing time for non priority packets in nanoseconds
 	private int enEventsNonPrio;
 	private int deEventsNonPrio;
+	private int countNonPrioDelayed;
+	private double percNonPrioDelayed;
 	
 	//private ArrayList<Event> eventsPrio		= new ArrayList<Event>();
 	private CopyOnWriteArrayList<Event> eventsPrio		= new CopyOnWriteArrayList<Event>();
 	private long avrgQueueTimePrio;				// average queuing time for priority packets in nanoseconds
 	private int enEventsPrio;
 	private int deEventsPrio;
+	private int countPrioDelayed;
+	private double percPrioDelayed;
 	
+	private double percAllDelayed;
+	
+
+	
+	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Constructors
 	/**
 	 * Creates a new Statistics instance for tracing simulation events
 	 * @param outputFile path to output file (simulation trace)
 	 */
 	public Statistics(String outputFile) {
 		this.outputFile = outputFile;
-		//this.numFiles = this.readNumOfFiles();
-		this.avrgQueueTimePrio = 0L;
-		this.avrgQueueTimeNonPrio = 0L;
-		this.enEventsNonPrio = 0;
-		this.deEventsNonPrio = 0;
-		this.enEventsPrio = 0;
-		this.deEventsPrio = 0;
+		
+		// Init non priority fields
+		this.avrgQueueTimeNonPrio 	= 0L;
+		this.enEventsNonPrio 		= 0;
+		this.deEventsNonPrio 		= 0;
+		this.countNonPrioDelayed 	= 0;
+		this.percNonPrioDelayed		= 0.0;
+		
+		// Init priority fields
+		this.avrgQueueTimePrio 		= 0L;
+		this.enEventsPrio 			= 0;
+		this.deEventsPrio 			= 0;
+		this.countPrioDelayed 		= 0;
+		this.percPrioDelayed		= 0.0;
+		
+		this.percAllDelayed			= 0.0;
+		
 		initializeStatistics();
 	}//Constructor
 	
 	
-	/**
-	 * Triggers an event of the simulation
-	 * @param eventType the type of the event that occurred
-	 * @param packet the packet the event occurred with
-	 */
-	public void triggerEvent(int eventType, Packet packet){
-		Event event = new Event(eventType, packet);
-		//write to file
-		writeEventIntoFile(event);
-		//do some statistics work
-		updateStatistics(event);
-	}//createEvent
-	
 	
 	/**
+	 * Should be called by Constructor.
 	 * Initializes various fields of Statistics object. Creates a new file if output file does not exist yet.
 	 * Creates PrintWriter to "print" events into output file.
 	 * Creates BufferedReader to read events from output file.
@@ -108,7 +117,30 @@ public class Statistics implements Observer {
 		
 	}//initializeStatistics
 	
+
+
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Event Trigger
 	
+	/**
+	 * Triggers an event of the simulation
+	 * @param eventType the type of the event that occurred
+	 * @param packet the packet the event occurred with
+	 */
+	public void triggerEvent(int eventType, Packet packet){
+		Event event = new Event(eventType, packet);
+		//write to file
+		writeEventIntoFile(event);
+		//do some statistics work
+		updateStatistics(event);
+	}//createEvent
+	
+	/**
+	 * Writes the specified event into the output file and 
+	 * adds the event to corresponding event list for immediate statistics processing
+	 * @param event the event to be processed
+	 */
 	private synchronized void writeEventIntoFile(Event event){
 		//System.out.printf("Statistics: Writing event into file...");
 		pWriter.printf("%s\n", event.toString());//TODO--> add to event ArrayLists for updateStatistics during simulation
@@ -130,6 +162,7 @@ public class Statistics implements Observer {
 	
 	/**
 	 * Updates some statistics. Is called when a new event is written to file
+	 * Can only update statistics when the events are also added to the corresponding event lists.
 	 * @param event the newly arrived event
 	 */
 	private void updateStatistics(Event event) {
@@ -157,6 +190,11 @@ public class Statistics implements Observer {
 						if (enEvent != null) {
 							queueTime = event.getCreationTime() - enEvent.getCreationTime();
 							avrgQueueTimePrio = (avrgQueueTimePrio + queueTime)/2;
+							if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
+								countPrioDelayed++;
+								percPrioDelayed = (double)countPrioDelayed/deEventsPrio;
+								percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);
+							}//if
 						} else {
 							System.out.printf("ERROR ----------------> Couldn't find corresponding enqueue Packet %d\n", event.getPacket().getId());
 						}//if
@@ -170,6 +208,12 @@ public class Statistics implements Observer {
 						if (enEvent != null) {
 							queueTime = event.getCreationTime() - enEvent.getCreationTime();
 							avrgQueueTimeNonPrio = (avrgQueueTimeNonPrio + queueTime)/2;
+							if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
+								countNonPrioDelayed++;
+								percNonPrioDelayed = (double)countNonPrioDelayed/deEventsNonPrio;
+								percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);
+
+							}//if
 						} else {
 							System.out.printf("ERROR ----------------> Couldn't find corresponding enqueue Packet %d\n", event.getPacket().getId());
 						}//if
@@ -186,8 +230,21 @@ public class Statistics implements Observer {
 		}//switch
 	}//updateStatistics
 	
+
 	
 	
+	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Different update statistics methods as well as helper methods
+	
+	/**
+	 * Helper method which will return an event of specified priority, packet id, and event type
+	 * @param priority the priority of the event
+	 * @param id the packet id included in event
+	 * @param eventType the type of event
+	 * @return returns the desired event when it was found in event queues<br>
+	 * 		   returns null if it's not found
+	 */
 	private Event findEvent(Priority priority, int id, int eventType) {
 		switch (priority) {
 			case PACKET_PRIORITY_HIGH:
@@ -210,6 +267,13 @@ public class Statistics implements Observer {
 	}//findEvent
 
 
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// Read methods to read events from an existing output file
+	
+	/**
+	 * Reads all events from the output file and saves them into the corresponding event lists
+	 */
 	public void readEventsFromFile(){
 
 		try {
@@ -250,10 +314,12 @@ public class Statistics implements Observer {
 	}//readEventsFromFile
 	
 	
-	
-	public Event createEventFromString(String strEvent){
-		Event event = null;
-		Packet packet = null;
+	/**TODO--> Belongs into class Event??
+	 * Creates an event from a specified string line
+	 * @param strEvent the string line
+	 * @return the created Event object
+	 */
+	private Event createEventFromString(String strEvent){
 		int eventType;
 		Priority packetPriority;
 		
@@ -287,10 +353,7 @@ public class Statistics implements Observer {
 		return new Event( eventType, Long.parseLong(parts.get(0)), new Packet( Integer.parseInt(parts.get(1)), packetPriority ) );
 		
 	}//addEventFromString
-	
-	/*private int readNumOfFiles(){
-		return new File("output/").listFiles().length;
-	}*/
+
 	
 	
 	
@@ -302,7 +365,7 @@ public class Statistics implements Observer {
 			case SendConnection.SERVER_EVENT_TERMINATED:
 				pWriter.close();
 				System.out.printf("\n######################## Statistics #########################\n");
-				collectStatistics();
+				//collectStatistics();
 				printStatistics();
 				break;
 			default:
@@ -318,12 +381,12 @@ public class Statistics implements Observer {
 	 * Called when the Observable(SendConnection) notifies about its termination
 	 * Collects various statistics from the trace (output) file of the simulation
 	 */
-	private void collectStatistics() {
+	public void collectStatistics() {
 		System.out.printf("Collecting statistics...\n");
-		//readEventsFromFile();
+		readEventsFromFile();
 		//printEvents();
-		//avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
-		//avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
+		avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
+		avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
 	}//collectingStatistics
 
 
@@ -416,12 +479,21 @@ public class Statistics implements Observer {
 	}//countAllEvents
 	
 	
+	
+	
+	
+	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 // Various print methods
 	/**
 	 * Prints all events contained in output file.
 	 */
 	public void printEvents() {
+		System.out.printf("\nHIGH PRIORITY EVENTS:\n");
+		for (Event e: eventsPrio) {
+			System.out.printf("%s\n", e.toString());
+		}//for
+		System.out.printf("\nLOW PRIORITY EVENTS:\n");
 		for (Event e: eventsNonPrio) {
 			System.out.printf("%s\n", e.toString());
 		}//for
@@ -456,9 +528,39 @@ public class Statistics implements Observer {
 		System.out.printf("Low Priority Packets:\t%9d µs\n", avrgQueueTimeNonPrio/Time.NANOSEC_PER_MICROSEC);
 		System.out.printf("Total:\t\t\t%9d µs\n", ( (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2) / Time.NANOSEC_PER_MICROSEC );	//TODO only if both != 0
 		// If 'µ' is not displayed correctly, go to Eclipse > Preferences > General > Workspace > Text File Encoding
-
+		
+		printPacketStatistics();
 		
 	}//printStatistics
+	
+	
+	
+	public void printPacketStatistics() {
+		System.out.printf("\n=== Packet Counts =============\n", DEFAULT_DELAY);
+		System.out.printf("\nNumber of packets with a delay of more than %d\n", DEFAULT_DELAY);
+		System.out.printf("High Priority Packets:\t%9d\n", countPrioDelayed);		
+		System.out.printf("Low Priority Packets:\t%9d\n", countNonPrioDelayed);
+		
+		System.out.printf("\n\t\t\t Delayed:\t Total:\t|    Delayed percentage:\n" +
+				"--------------------------------------------------------+-----------\n");
+		for (Priority p: Priority.values()) {
+
+			switch (p) {
+				case PACKET_PRIORITY_HIGH:
+					System.out.printf("High Priority Packets:\t%9d\t%9d\t| %9f\n", countPrioDelayed, deEventsPrio, percPrioDelayed*100);
+					break;
+				case PACKET_PRIORITY_LOW:
+					System.out.printf("Low Priority Packets:\t%9d\t%9d\t| %9f\n", countNonPrioDelayed, deEventsNonPrio, percNonPrioDelayed*100);
+					break;
+				default:
+					break;
+			}//switch
+		}//for
+		System.out.printf("========================================================+===========\n" +
+						  "Total Packets \t\t%9d\t%9d\t| %9f\n", countPrioDelayed+countNonPrioDelayed, 
+						  										deEventsPrio+deEventsNonPrio, 
+						  										percAllDelayed*100);
+	}//printPacketStatistics
 
 
 	
