@@ -5,8 +5,6 @@ import java.util.Scanner;
 
 public class SimulationEnvironment {
 	
-	
-	
 	public static void main(String[] args) {
 		int runs;
 		Simulator simulator = null;
@@ -44,6 +42,7 @@ public class SimulationEnvironment {
 				}//if
 			}//if
 		}//for
+		
 		
 	}
 
