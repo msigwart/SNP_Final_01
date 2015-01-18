@@ -31,9 +31,7 @@ public class Statistics implements Observer {
 	private PrintWriter 	pWriter;
 	private FileInputStream	fStream;
 	private BufferedReader 	bReader;
-	
-	private int numFiles;
-	
+		
 	// Different statistics fields
 	//private ArrayList<Event> eventsNonPrio 	= new ArrayList<Event>();
 	private CopyOnWriteArrayList<Event> eventsNonPrio 	= new CopyOnWriteArrayList<Event>();	// TODO--> better concurrent collection (ArrayList not concurrent)
