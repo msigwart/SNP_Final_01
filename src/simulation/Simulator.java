@@ -6,6 +6,19 @@ public class Simulator {
 	public static final int PACKET_SIZE_BYTES = 1526; //bytes
 	public static final int PACKET_SIZE_BITS = PACKET_SIZE_BYTES*8;
 	
+	//Default values for the simulation
+	public static final int DEFAULT_CLIENT_SEND_INTERVAL 		= 100; //microseconds
+	public static final int DEFAULT_CLIENT_SEND_MIN_INTERVAL	= 10;
+	public static final int DEFAULT_CLIENT_SEND_MAX_INTERVAL	= 1000;
+	public static final int DEFAULT_CLIENT_NUM_OF_PACKETS 		= 10000;
+	public static final int DEFAULT_NUM_OF_CLIENTS				= 4;
+	public static final int DEFAULT_NUM_OF_PRIORITY_CLIENTS		= 1;
+	
+	//Server globals
+	public static final int DEFAULT_SERVER_RUNTIME 				= 10; //seconds
+	public static final int DEFAULT_SERVER_SEND_SPEED			= 1000; //Mbs
+	public static final int DEFAULT_SERVER_QUEUE_SIZE 			= 1000000;
+	
 	private final int clientSendInterval;
 	private final int clientSendMinInterval;
 	private final int clientSendMaxInterval;
@@ -20,12 +33,13 @@ public class Simulator {
 	private final Simulation simulation = null;
 	
 	Simulator(int numClients, int numProrityClients){
-		this(100, 10, 1000, 10000, numClients, numProrityClients, 10, 1000, 1000000);
+		this(DEFAULT_CLIENT_SEND_INTERVAL, DEFAULT_CLIENT_SEND_MIN_INTERVAL, DEFAULT_CLIENT_SEND_MAX_INTERVAL,
+				DEFAULT_CLIENT_NUM_OF_PACKETS, numClients, numProrityClients, DEFAULT_SERVER_RUNTIME, DEFAULT_SERVER_SEND_SPEED, 
+				DEFAULT_SERVER_QUEUE_SIZE);
 	}//Constructor
 	
 	Simulator(int clientSendInterval, int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int numClients, int numPriorityClients,
 			  int serverRuntime, int serverSendSpeed, int serverQueueSize){
-		
 		this.clientSendInterval = clientSendInterval;
 		this.clientSendMinInterval = clientSendMinInterval;
 		this.clientSendMaxInterval = clientSendMaxInterval;
@@ -36,9 +50,7 @@ public class Simulator {
 		this.serverSendSpeed = serverSendSpeed;
 		this.micSecondsPerPacket = PACKET_SIZE_BITS/serverSendSpeed;
 		this.serverQueueSize = serverQueueSize;
-		
 	}//Constructor
-	
 	
 	public void runSimulation(){
 		
