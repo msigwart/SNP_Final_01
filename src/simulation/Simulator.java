@@ -1,5 +1,7 @@
 package simulation;
 
+import statistics.Statistics;
+
 public class Simulator {
 	public static final int PACKET_SIZE_BYTES = 1526; //bytes
 	public static final int PACKET_SIZE_BITS = PACKET_SIZE_BYTES*8;
@@ -19,7 +21,7 @@ public class Simulator {
 	
 	Simulator(int numClients, int numProrityClients){
 		this(100, 10, 1000, 10000, numClients, numProrityClients, 10, 1000, 1000000);
-	}
+	}//Constructor
 	
 	Simulator(int clientSendInterval, int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int numClients, int numPriorityClients,
 			  int serverRuntime, int serverSendSpeed, int serverQueueSize){
@@ -34,7 +36,44 @@ public class Simulator {
 		this.serverSendSpeed = serverSendSpeed;
 		this.micSecondsPerPacket = PACKET_SIZE_BITS/serverSendSpeed;
 		this.serverQueueSize = serverQueueSize;
-		//this.simulation = new Simulation();
+		
 	}//Constructor
 	
+	
+	public void runSimulation(){
+		
+		System.out.printf("Hello Simulator\n");
+		System.out.printf( "The time is: %s\n", Time.getTimeStampString());
+
+		// Create Statistics object
+		Statistics stats = new Statistics("output/ouput.txt");
+		
+		// Create SendConnection
+		SendConnection sc = new SendConnection(serverRuntime, serverSendSpeed, serverQueueSize, stats);
+		sc.start();
+		
+		// Creation of clients
+		int clientId = 0;		
+		Client cl[] = new Client[numClients];
+		
+		for (int i=0; i<cl.length; i++) {
+			Priority p = Priority.PACKET_PRIORITY_LOW;
+			if (i<numPriorityClients) {
+				p = Priority.PACKET_PRIORITY_HIGH;
+			}//if
+			cl[i] = new Client(clientId++, clientNumPackets, clientSendInterval, p);
+			cl[i].connectToSender(sc);					//Connect client to send connection
+		}//for
+		
+		// Start of clients
+		for (int i=0; i<cl.length; i++) {
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			cl[i].start();
+		}//for
+		
+	}//runSimulation
 }
