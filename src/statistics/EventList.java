@@ -140,5 +140,17 @@ public class EventList {
 	}//retrieveEvent
 	
 	
+	public Event retrieveCorrespondingEvent(int packetId, int eventType) {
+		switch (eventType) {
+			case Event.EVENT_TYPE_ENQUEUE:
+				return retrieveEvent(packetId, Event.EVENT_TYPE_DEQUEUE);
+			case Event.EVENT_TYPE_DEQUEUE:
+				return retrieveEvent(packetId, Event.EVENT_TYPE_ENQUEUE);
+			default:
+				return null;
+		}//switch
+	}//retrieveCorrespondingEvent
+	
+	
 	
 }//EventList
