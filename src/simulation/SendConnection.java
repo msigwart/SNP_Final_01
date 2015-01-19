@@ -151,14 +151,6 @@ public class SendConnection extends Observable implements Runnable {
 					}//if
 				}//for
 				
-				/*if ( !queuePriority.isEmpty() ) {
-					packet = dequeuePacket(Priority.PACKET_PRIORITY_HIGH);
-					currentTime = newTime;
-				} else if ( !queueNonPriority.isEmpty() ) {
-					packet = dequeuePacket(Priority.PACKET_PRIORITY_LOW);
-					currentTime = newTime;
-				}*/
-				//currentTime = newTime;
 
 			}//if
 			
