@@ -1,11 +1,13 @@
 package simulation;
 
+import java.util.EnumMap;
 import java.util.NoSuchElementException;
 import java.util.Observable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import statistics.Event;
 import statistics.Statistics;
+import simulation.Priority;
 
 /**
  * SendConnection implements the Runnable interface and contains a Thread object as private member. 
@@ -31,6 +33,7 @@ public class SendConnection extends Observable implements Runnable {
 	
 	//Server events
 	public static final int SERVER_EVENT_TERMINATED 	= 1;
+	public static final int SERVER_EVENT_DEQUEUE		= 1;
 	
 	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
@@ -43,12 +46,7 @@ public class SendConnection extends Observable implements Runnable {
 	/**
 	 * Priority buffer for received packets from priority clients
 	 */
-	private 			ConcurrentLinkedQueue<Packet>	queuePriority;
-
-	/**
-	 * Buffer for received packets from non-priority clients
-	 */
-	private 			ConcurrentLinkedQueue<Packet> 	queueNonPriority;
+	private				EnumMap<Priority, ConcurrentLinkedQueue<Packet>> queues;
 	
 	
 	/**
@@ -90,8 +88,11 @@ public class SendConnection extends Observable implements Runnable {
 		this.connectionSpeed = speed;
 		
 		//init queues
-		this.queueNonPriority 	= new ConcurrentLinkedQueue<Packet>();
-		this.queuePriority		= new ConcurrentLinkedQueue<Packet>();
+		this.queues				= new EnumMap<>(Priority.class);
+		for (Priority p : Priority.values()) {
+			queues.put(p, new ConcurrentLinkedQueue<Packet>());
+		}//for
+
 		
 		//init stats
 		this.stats = stats;
@@ -143,21 +144,22 @@ public class SendConnection extends Observable implements Runnable {
 			if ( (newTime - currentTime) >= (Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC) ) {
 				//dequeuePacket();
 				Packet packet = null;
-				if ( !queuePriority.isEmpty() ) {
+				for (Priority p: Priority.values()) {
+					if (!queues.get(p).isEmpty()) {
+						packet = dequeuePacket(p);
+						currentTime = newTime;
+					}//if
+				}//for
+				
+				/*if ( !queuePriority.isEmpty() ) {
 					packet = dequeuePacket(Priority.PACKET_PRIORITY_HIGH);
 					currentTime = newTime;
 				} else if ( !queueNonPriority.isEmpty() ) {
 					packet = dequeuePacket(Priority.PACKET_PRIORITY_LOW);
 					currentTime = newTime;
-				}
+				}*/
 				//currentTime = newTime;
-				/*packet = dequeuePacket(Priority.PACKET_PRIORITY_HIGH);		//Try to dequeue high priority
-				if (packet == null) {										//If no high priority, dequeue low priority
-					packet = dequeuePacket(Priority.PACKET_PRIORITY_LOW);
-				}//if
-				if (packet != null) {
-					currentTime = newTime;
-				}//if*/
+
 			}//if
 			
 			//Display progress
@@ -199,18 +201,17 @@ public class SendConnection extends Observable implements Runnable {
 	public boolean enqueuePacket(Packet packet, Priority priority) {
 		//System.out.printf("SendConnection: received packet %d\n", packet.getId());		//TODO: Output message in calls not in declaration
 		boolean success = false;
-		stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);
-		switch (priority) {
-			case PACKET_PRIORITY_HIGH:
-				success = queuePriority.add(packet);
-				break;
-			case PACKET_PRIORITY_LOW:
-				//stats.triggerEvent(Event.EVENT_TYPE_ENQUEUE, packet);
-				success = queueNonPriority.add(packet);
-				break;
-			default:
-				break;
-		}//switch
+		long arrivalTime = System.nanoTime();
+		Event event = new Event(Event.EVENT_TYPE_ENQUEUE, arrivalTime, packet);
+		
+		// Add packet to right queue
+		success = queues.get(priority).add(packet);
+		
+		if (success) {
+			stats.triggerEvent(event);
+		} else {
+			System.out.printf("SendConnection: Could not add packet to queue %s", priority.toString());
+		}//if
 		
 		return success;
 
@@ -227,19 +228,13 @@ public class SendConnection extends Observable implements Runnable {
 	private Packet dequeuePacket(Priority priority) {
 		try {
 			Packet packet = null;
-			switch (priority) {
-				case PACKET_PRIORITY_HIGH:
-					packet = queuePriority.remove();
-					stats.triggerEvent(Event.EVENT_TYPE_DEQUEUE, packet);
-					break;
-				case PACKET_PRIORITY_LOW:
-					packet = queueNonPriority.remove();
-					stats.triggerEvent(Event.EVENT_TYPE_DEQUEUE, packet);
-					break;
-				default:
-					break;
-			}//switch
+			Event event = null;
+			long departureTime = System.nanoTime();
+			packet = queues.get(priority).remove();
+			event = new Event(Event.EVENT_TYPE_DEQUEUE, departureTime, packet);
+			stats.triggerEvent(event);
 			//System.out.printf("SendConnection: Sending packet %d\n", packet.getId()); //TODO: Output message in calls not in declaration
+
 			return packet;
 		} catch (NoSuchElementException e) {
 			//System.out.printf("SendConnection: No Element in Queue...\n");
