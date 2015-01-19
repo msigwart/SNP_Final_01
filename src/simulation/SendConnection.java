@@ -151,7 +151,7 @@ public class SendConnection extends Observable implements Runnable {
 						break;
 					}//if
 				}//for
-				
+				currentTime = newTime;
 
 			}//if
 			

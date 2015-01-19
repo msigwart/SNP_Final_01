@@ -12,6 +12,7 @@ import java.io.*;
 import simulation.Packet;
 import simulation.Priority;
 import simulation.SendConnection;
+import simulation.Simulation;
 import simulation.Time;
 
 
@@ -164,15 +165,23 @@ public class Statistics implements Observer {
 		double newPercDelayed;
 		
 		EventList el = eventLists.get(event.getPacket().getPriority());
-		
+		System.out.printf("%s old average: %d\n", event.getPacket().getPriority(), el.getAvrgQueueTime());
 		for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
 			if (i==event.getEventType()) {
 				correspondingEvent = el.retrieveCorrespondingEvent( event.getPacket().getId(), i );
 				
 				if (correspondingEvent != null) {
 					queueTime = event.getCreationTime() - correspondingEvent.getCreationTime();
-					newAvrgTime = (el.getAvrgQueueTime() + queueTime)/2;
-					el.setAvrgQueueTime(newAvrgTime);
+					System.out.printf("Packet %d -- %s new queueTime: %d\n", event.getPacket().getId(), event.getPacket().getPriority(), queueTime);
+					if (!el.isAverageSet()) {
+						el.setAvrgQueueTime(queueTime);		// First average calculation --> don't divide by 2!!!
+						System.out.printf("FIRST %s new average: %d\n", event.getPacket().getPriority(), queueTime);
+						el.setHasAverage(true);
+					} else {
+						newAvrgTime = ((el.getAvrgQueueTime() + queueTime)/2);
+						el.setAvrgQueueTime(newAvrgTime);
+						System.out.printf("%s new average: %d\n", event.getPacket().getPriority(), newAvrgTime);
+					}//if
 					
 					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
 						el.incCountDelayed();
@@ -429,6 +438,7 @@ public class Statistics implements Observer {
 	public void printStatistics() {
 		
 		System.out.printf("\n############### Statistics ##########################################\n");
+		System.out.printf("SendTime Server: %d µs/Packet --- %d ns/Packet\n", Simulation.MICSECONDS_PER_PACKET, Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC);
 		printEventStatistics();
 		printQueueStatistics();
 		printPacketStatistics();
