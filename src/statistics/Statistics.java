@@ -19,7 +19,7 @@ import simulation.Time;
  * This class collects the event of the simulation, saves them into file. It implements the Observer interface.
  * It provides several different statistics measures, such as average queuing time, etc.
  * 
- * @author Bernardo Paulino
+ * @author Bernardo Paulino, Marten Sigwart
  *
  */
 public class Statistics implements Observer {
@@ -121,7 +121,7 @@ public class Statistics implements Observer {
 	 */
 	private synchronized void writeEventIntoFile(Event event){
 		//System.out.printf("Statistics: Writing event into file...");
-		pWriter.printf("%s\n", event.toString());//TODO--> add to event ArrayLists for updateStatistics during simulation (Might produce wrong simulation results
+		pWriter.printf("%s\n", event.toString());
 		
 	}//writeEventIntoFile
 	
@@ -135,7 +135,7 @@ public class Statistics implements Observer {
 		//do some statistics work
 		
 		updateEventCounter(event);
-		if (event.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
+		if (event.getEventType() == Event.EVENT_TYPE_DEQUEUE) {
 			updateAvrgQueueTimes(event);
 		}//if
 		
@@ -165,50 +165,31 @@ public class Statistics implements Observer {
 		
 		EventList el = eventLists.get(event.getPacket().getPriority());
 		
-		switch (event.getEventType()) {
+		for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
+			if (i==event.getEventType()) {
+				correspondingEvent = el.retrieveCorrespondingEvent( event.getPacket().getId(), i );
+				
+				if (correspondingEvent != null) {
+					queueTime = event.getCreationTime() - correspondingEvent.getCreationTime();
+					newAvrgTime = (el.getAvrgQueueTime() + queueTime)/2;
+					el.setAvrgQueueTime(newAvrgTime);
+					
+					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
+						el.incCountDelayed();
+						newPercDelayed = (double)el.getCountDelayed()/el.getDequeueEventCount();
+						el.setPercentDelayed(newPercDelayed);
+						//percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);	//TODO update!!!
+					}//if
+				}//if
+			}//if
+		}//for
 		
-			case Event.EVENT_TYPE_DEQUEUE:
-				correspondingEvent = el.retrieveEvent( event.getPacket().getId(), Event.EVENT_TYPE_ENQUEUE );
-				
-				if (correspondingEvent != null) {
-					queueTime = event.getCreationTime() - correspondingEvent.getCreationTime();
-					newAvrgTime = (el.getAvrgQueueTime() + queueTime)/2;
-					el.setAvrgQueueTime(newAvrgTime);
-					
-					if (((double)queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
-						el.incCountDelayed();
-						newPercDelayed = (double)el.getCountDelayed()/el.getDequeueEventCount();
-						el.setPercentDelayed(newPercDelayed);
-						//percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);	//TODO update!!!
-					}//if
-				}//if
-				break;
-				
-			case Event.EVENT_TYPE_ENQUEUE:
-				correspondingEvent = el.retrieveEvent( event.getPacket().getId(), Event.EVENT_TYPE_DEQUEUE );
-				
-				if (correspondingEvent != null) {
-					queueTime = event.getCreationTime() - correspondingEvent.getCreationTime();
-					newAvrgTime = (el.getAvrgQueueTime() + queueTime)/2;
-					el.setAvrgQueueTime(newAvrgTime);
-					
-					if (((double)queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
-						el.incCountDelayed();
-						newPercDelayed = (double)el.getCountDelayed()/el.getDequeueEventCount();
-						el.setPercentDelayed(newPercDelayed);
-						//percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);	//TODO update!!!
-					}//if
-				}//if
-				break;
-			default:
-				break;
-		}//switch
 		
 	}//updateAvrgQueueTimes
 	
 	
 	public void updateAvrgQueueTime(Priority priority) {
-		
+		//TODO
 	}
 
 	
@@ -477,7 +458,7 @@ public class Statistics implements Observer {
 	public void printQueueStatistics() {
 		printStatTitle("Queue Time:");
 		for (Priority p: Priority.values()) {
-			System.out.printf("%s:\t%9f µs\n", p, (double)eventLists.get(p).getAvrgQueueTime()/Time.NANOSEC_PER_MICROSEC);
+			System.out.printf("%s:\t%7.2f µs\n", p, (double)eventLists.get(p).getAvrgQueueTime()/Time.NANOSEC_PER_MICROSEC);
 		}//for
 		//System.out.printf("Total:\t\t\t%9d µs\n\n", ( (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2) / Time.NANOSEC_PER_MICROSEC );	//TODO only if both != 0
 		// If 'µ' is not displayed correctly, go to Eclipse > Preferences > General > Workspace > Text File Encoding	
