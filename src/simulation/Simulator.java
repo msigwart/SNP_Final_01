@@ -1,8 +1,11 @@
 package simulation;
 
+import java.util.Observable;
+import java.util.Observer;
+
 import statistics.Statistics;
 
-public class Simulator {
+public class Simulator implements Observer{
 	
 	//Packet default globals
 	public static final int PACKET_SIZE_BYTES = 1526; //bytes
@@ -33,49 +36,53 @@ public class Simulator {
 	private final long micSecondsPerPacket;	//ca. 122 µs/Packet
 	private final int serverQueueSize;
 	
-	private final Simulation simulation = null;
+	//private final Simulation simulation = null;
+	private final Statistics stats;
+	private String file;
+	private boolean running;
+	private boolean started;
 	
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 	// Constructors	
 	
-	Simulator(){
+	Simulator(String file){
 		this(DEFAULT_CLIENT_SEND_INTERVAL, DEFAULT_CLIENT_SEND_MIN_INTERVAL, DEFAULT_CLIENT_SEND_MAX_INTERVAL,
 				DEFAULT_CLIENT_NUM_OF_PACKETS, DEFAULT_NUM_OF_CLIENTS, DEFAULT_NUM_OF_PRIORITY_CLIENTS, DEFAULT_SERVER_RUNTIME, DEFAULT_SERVER_SEND_SPEED, 
-				DEFAULT_SERVER_QUEUE_SIZE);
+				DEFAULT_SERVER_QUEUE_SIZE, file);
 	}//Constructor
 	
-	Simulator(int numClients, int numProrityClients){
+	Simulator(int numClients, int numProrityClients, String file){
 		this(DEFAULT_CLIENT_SEND_INTERVAL, DEFAULT_CLIENT_SEND_MIN_INTERVAL, DEFAULT_CLIENT_SEND_MAX_INTERVAL,
 				DEFAULT_CLIENT_NUM_OF_PACKETS, numClients, numProrityClients, DEFAULT_SERVER_RUNTIME, DEFAULT_SERVER_SEND_SPEED, 
-				DEFAULT_SERVER_QUEUE_SIZE);
+				DEFAULT_SERVER_QUEUE_SIZE, file);
 	}//Constructor
 	
-	Simulator(int numClients, int numProrityClients, int clientNumPackets){
+	Simulator(int numClients, int numProrityClients, int clientNumPackets, String file){
 		this(DEFAULT_CLIENT_SEND_INTERVAL, DEFAULT_CLIENT_SEND_MIN_INTERVAL, DEFAULT_CLIENT_SEND_MAX_INTERVAL,
 				clientNumPackets, numClients, numProrityClients, DEFAULT_SERVER_RUNTIME, DEFAULT_SERVER_SEND_SPEED, 
-				DEFAULT_SERVER_QUEUE_SIZE);
+				DEFAULT_SERVER_QUEUE_SIZE, file);
 	}//Constructor
 	
-	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int serverRuntime, int serverSendSpeed){
+	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int serverRuntime, int serverSendSpeed, String file){
 		this(DEFAULT_CLIENT_SEND_INTERVAL, clientSendMinInterval, clientSendMaxInterval,
 				DEFAULT_CLIENT_NUM_OF_PACKETS, DEFAULT_NUM_OF_CLIENTS, DEFAULT_NUM_OF_PRIORITY_CLIENTS, serverRuntime, serverSendSpeed, 
-				DEFAULT_SERVER_QUEUE_SIZE);
+				DEFAULT_SERVER_QUEUE_SIZE, file);
 	}//Constructor
 	
-	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int serverRuntime, int serverSendSpeed){
+	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int serverRuntime, int serverSendSpeed, String file){
 		this(DEFAULT_CLIENT_SEND_INTERVAL, clientSendMinInterval, clientSendMaxInterval,
 				clientNumPackets, DEFAULT_NUM_OF_CLIENTS, DEFAULT_NUM_OF_PRIORITY_CLIENTS, serverRuntime, serverSendSpeed, 
-				DEFAULT_SERVER_QUEUE_SIZE);
+				DEFAULT_SERVER_QUEUE_SIZE, file);
 	}//Constructor
 	
-	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int serverRuntime, int serverSendSpeed, int serverQueueSize){
+	Simulator(int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int serverRuntime, int serverSendSpeed, int serverQueueSize, String file){
 		this(DEFAULT_CLIENT_SEND_INTERVAL, clientSendMinInterval, clientSendMaxInterval,
 				clientNumPackets, DEFAULT_NUM_OF_CLIENTS, DEFAULT_NUM_OF_PRIORITY_CLIENTS, serverRuntime, serverSendSpeed, 
-				serverQueueSize);
+				serverQueueSize, file);
 	}//Constructor
 	
 	Simulator(int clientSendInterval, int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int numClients, int numPriorityClients,
-			  int serverRuntime, int serverSendSpeed, int serverQueueSize){
+			  int serverRuntime, int serverSendSpeed, int serverQueueSize, String file){
 		this.clientSendInterval = clientSendInterval;
 		this.clientSendMinInterval = clientSendMinInterval;
 		this.clientSendMaxInterval = clientSendMaxInterval;
@@ -86,6 +93,10 @@ public class Simulator {
 		this.serverSendSpeed = serverSendSpeed;
 		this.micSecondsPerPacket = PACKET_SIZE_BITS/serverSendSpeed;
 		this.serverQueueSize = serverQueueSize;
+		this.file = file;
+		this.stats = new Statistics(file);
+		this.running = false;
+		this.started = false;
 	}//Constructor
 	
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
@@ -96,11 +107,9 @@ public class Simulator {
 		System.out.printf("Hello Simulator\n");
 		System.out.printf( "The time is: %s\n", Time.getTimeStampString());
 
-		// Create Statistics object
-		Statistics stats = new Statistics("output/ouput.txt");
-		
 		// Create SendConnection
 		SendConnection sc = new SendConnection(serverRuntime, serverSendSpeed, serverQueueSize, stats);
+		sc.addObserver(this);
 		sc.start();
 		
 		// Creation of clients
@@ -125,6 +134,9 @@ public class Simulator {
 			}
 			cl[i].start();
 		}//for
+		
+		running = true;
+		started = true;
 		
 	}//runSimulation
 	
@@ -162,4 +174,26 @@ public class Simulator {
 	public static void setDefaultServerQueueSize(int defaultServerQueueSize){
 		DEFAULT_SERVER_QUEUE_SIZE = defaultServerQueueSize;
 	}//setDefaultServerQueueSize
+
+	
+	@Override
+	public void update(Observable arg0, Object arg1) {
+		switch ((int)arg1) {
+			case SendConnection.SERVER_EVENT_TERMINATED:
+				stats.printStatistics();
+				running = false;
+				break;
+			default:
+				break;
+		}//switch	
+	}
+	
+	
+	public boolean isRunning(){
+		return running;
+	}
+	
+	public boolean getStarted(){
+		return started;
+	}
 }
