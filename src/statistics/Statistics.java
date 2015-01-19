@@ -187,10 +187,6 @@ public class Statistics implements Observer {
 		
 	}//updateAvrgQueueTimes
 	
-	
-	public void updateAvrgQueueTime(Priority priority) {
-		//TODO
-	}
 
 	
 	
