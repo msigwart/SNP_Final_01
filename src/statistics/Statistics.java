@@ -6,6 +6,7 @@ import java.util.Observer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.io.*;
 
+
 import simulation.Packet;
 import simulation.Priority;
 import simulation.SendConnection;
@@ -128,12 +129,12 @@ public class Statistics implements Observer {
 	 * @param eventType the type of the event that occurred
 	 * @param packet the packet the event occurred with
 	 */
-	public void triggerEvent(int eventType, Packet packet){
-		Event event = new Event(eventType, packet);
+	public void triggerEvent(Event event){
+		//Event event = new Event(eventType, time, packet);
 		//write to file
 		writeEventIntoFile(event);
 		//do some statistics work
-		updateStatistics(event);
+		//updateStatistics(event);			//DON'T!!! Too expensive, takes too long
 	}//createEvent
 	
 	/**
@@ -145,7 +146,7 @@ public class Statistics implements Observer {
 		//System.out.printf("Statistics: Writing event into file...");
 		pWriter.printf("%s\n", event.toString());//TODO--> add to event ArrayLists for updateStatistics during simulation
 		
-		switch (event.getPacket().getPriority()) {
+		/*switch (event.getPacket().getPriority()) {
 			case PACKET_PRIORITY_HIGH:
 				eventsPrio.add(event);
 				break;
@@ -155,7 +156,7 @@ public class Statistics implements Observer {
 			default:
 				break;
 			
-		}//switch
+		}//switch*/
 		
 	}//writeEventIntoFile
 	
@@ -167,15 +168,11 @@ public class Statistics implements Observer {
 	 */
 	private void updateStatistics(Event event) {
 		//do some statistics work
-		switch (event.getEventType()) {
 		
-			case Event.EVENT_TYPE_ENQUEUE:
-				switch (event.getPacket().getPriority()) {
-					case PACKET_PRIORITY_HIGH:	enEventsPrio++;		break;		//update counter
-					case PACKET_PRIORITY_LOW:  	enEventsNonPrio++;	break;		//update counter
-					default: break;
-				}//switch
-				break;
+		updateEventCounter(event);
+		updateAvrgQueueTimes(event);
+		/*
+		switch (event.getEventType()) {
 				
 			case Event.EVENT_TYPE_DEQUEUE:
 				Event enEvent;					// The corresponding enqueue Event
@@ -183,7 +180,6 @@ public class Statistics implements Observer {
 				switch (event.getPacket().getPriority()) {
 				
 					case PACKET_PRIORITY_HIGH:
-						deEventsPrio++;		//update counter
 						
 						//update average queue time
 						enEvent = findEvent(Priority.PACKET_PRIORITY_HIGH, event.getPacket().getId(), Event.EVENT_TYPE_ENQUEUE);
@@ -201,7 +197,6 @@ public class Statistics implements Observer {
 						break;
 						
 					case PACKET_PRIORITY_LOW:
-						deEventsNonPrio++;	//update counter
 						
 						//update average queue time
 						enEvent = findEvent(Priority.PACKET_PRIORITY_LOW, event.getPacket().getId(), Event.EVENT_TYPE_ENQUEUE);
@@ -228,8 +223,92 @@ public class Statistics implements Observer {
 			default:
 				break;
 		}//switch
+		*/
 	}//updateStatistics
 	
+	
+	
+	private void updateEventCounter(Event event) {
+		switch (event.getEventType()) {
+			
+			case Event.EVENT_TYPE_ENQUEUE:
+				switch (event.getPacket().getPriority()) {
+					case PACKET_PRIORITY_HIGH:	enEventsPrio++;		break;		//update counter
+					case PACKET_PRIORITY_LOW:  	enEventsNonPrio++;	break;		//update counter
+					default: break;
+				}//switch
+				break;
+			
+			case Event.EVENT_TYPE_DEQUEUE:
+				switch (event.getPacket().getPriority()) {
+					case PACKET_PRIORITY_HIGH:	deEventsPrio++;		break;	//update counter
+					case PACKET_PRIORITY_LOW:	deEventsNonPrio++;	break;
+					default: break;
+				}//switch
+				break;
+		}//switch
+	}//updateEventCounter
+	
+	
+	public void updateAvrgQueueTimes(Event event) {
+		switch (event.getEventType()) {
+		
+		case Event.EVENT_TYPE_DEQUEUE:
+			Event enEvent;					// The corresponding enqueue Event
+			long queueTime;
+			switch (event.getPacket().getPriority()) {
+			
+				case PACKET_PRIORITY_HIGH:
+					//update average queue time
+					enEvent = findEvent(Priority.PACKET_PRIORITY_HIGH, event.getPacket().getId(), Event.EVENT_TYPE_ENQUEUE);
+					if (enEvent != null) {
+						queueTime = event.getCreationTime() - enEvent.getCreationTime();
+						avrgQueueTimePrio = (avrgQueueTimePrio + queueTime)/2;
+						if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
+							countPrioDelayed++;
+							percPrioDelayed = (double)countPrioDelayed/deEventsPrio;
+							percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);
+						}//if
+					} else {
+						System.out.printf("ERROR ----------------> Couldn't find corresponding enqueue Packet %d\n", event.getPacket().getId());
+					}//if
+					break;
+					
+				case PACKET_PRIORITY_LOW:
+					
+					//update average queue time
+					enEvent = findEvent(Priority.PACKET_PRIORITY_LOW, event.getPacket().getId(), Event.EVENT_TYPE_ENQUEUE);
+					if (enEvent != null) {
+						queueTime = event.getCreationTime() - enEvent.getCreationTime();
+						avrgQueueTimeNonPrio = (avrgQueueTimeNonPrio + queueTime)/2;
+						if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
+							countNonPrioDelayed++;
+							percNonPrioDelayed = (double)countNonPrioDelayed/deEventsNonPrio;
+							percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);
+
+						}//if
+					} else {
+						System.out.printf("ERROR ----------------> Couldn't find corresponding enqueue Packet %d\n", event.getPacket().getId());
+					}//if
+					break;
+				default: break;
+			}//switch
+			
+			break;
+			
+		case Event.EVENT_TYPE_ENQUEUE:
+			
+			break;
+		default:
+			break;
+	}//switch
+		
+	}//updateAvrgQueueTimes
+	
+	
+	public void updateAvrgQueueTime(Priority priority) {
+		
+	}
 
 	
 	
@@ -282,7 +361,7 @@ public class Statistics implements Observer {
 			
 			while(line != null){
 				Event e = this.createEventFromString(line);
-				
+				updateStatistics(e);
 				if (e == null) {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
@@ -361,15 +440,19 @@ public class Statistics implements Observer {
 	@Override
 	public void update(Observable o, Object arg) {		//OBSERVER PATTERN
 		
-		switch ((int)arg) {
-			case SendConnection.SERVER_EVENT_TERMINATED:
-				pWriter.close();
-				//collectStatistics();
-				printStatistics();
-				break;
-			default:
-				break;
-		}//switch
+		if (arg instanceof Event) {
+			updateStatistics((Event)arg);
+		} else {
+			switch ((int)arg) {
+				case SendConnection.SERVER_EVENT_TERMINATED:
+					pWriter.close();
+					collectStatistics();
+					printStatistics();
+					break;
+				default:
+					break;
+			}//switch
+		}//if
 	}//update
 	
 
@@ -384,8 +467,8 @@ public class Statistics implements Observer {
 		System.out.printf("Collecting statistics...\n");
 		readEventsFromFile();
 		//printEvents();
-		avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
-		avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
+		//avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
+		//avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
 	}//collectingStatistics
 
 
