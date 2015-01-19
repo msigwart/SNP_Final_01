@@ -14,8 +14,12 @@ public class EventList {
 	private int 			 			dequeueEventCount;
 	private int 			 			countDelayed;
 	private double 			 			percentDelayed;
+	private boolean						hasAverage;
 	
 	
+
+
+
 	public EventList() {
 		this.events 			= new HashMap<Integer, ArrayList<Event>>();
 		this.avrgQueueTime 		= 0L;
@@ -23,6 +27,7 @@ public class EventList {
 		this.dequeueEventCount 	= 0;
 		this.countDelayed		= 0;
 		this.percentDelayed		= 0.0;
+		this.hasAverage			= false;
 	}//Constructor
 
 
@@ -63,6 +68,17 @@ public class EventList {
 	public double getPercentDelayed() {
 		return percentDelayed;
 	}//getPercentDelayed
+	
+	
+	
+	public boolean isAverageSet() {
+		return hasAverage;
+	}//isAverageSet
+
+
+	public void setHasAverage(boolean hasAverage) {
+		this.hasAverage = hasAverage;
+	}//setHasAverage
 	
 	
 	
