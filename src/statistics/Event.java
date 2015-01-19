@@ -8,6 +8,7 @@ public class Event {
 	// Global event types
 	public static final int EVENT_TYPE_ENQUEUE = 0;
 	public static final int EVENT_TYPE_DEQUEUE = 1;
+	public static final int NUMBER_OF_EVENTS   = 2;
 	public static final int EVENT_TYPE_UNKNOWN = -1;
 	
 	

@@ -1,20 +1,23 @@
 package statistics;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class EventList {
 	
-	private ArrayList<Event> events;
-	private long 			 avrgQueueTime;			// average queuing time in nanoseconds
-	private int 			 enqueueEventCount;
-	private int 			 dequeueEventCount;
-	private int 			 countDelayed;
-	private double 			 percentDelayed;
+	private Map<Integer, ArrayList<Event>> 	events;
+	private long 			 			avrgQueueTime;			// average queuing time in nanoseconds
+	private int 			 			enqueueEventCount;
+	private int 			 			dequeueEventCount;
+	private int 			 			countDelayed;
+	private double 			 			percentDelayed;
 	
 	
 	public EventList() {
-		this.events = new ArrayList<Event>();
+		this.events 			= new HashMap<Integer, ArrayList<Event>>();
 		this.avrgQueueTime 		= 0L;
 		this.enqueueEventCount 	= 0;
 		this.dequeueEventCount 	= 0;
@@ -25,7 +28,7 @@ public class EventList {
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
 // Getters for stats
-	public ArrayList<Event> getEvents() {
+	public Map<Integer, ArrayList<Event>> getEvents() {
 		return events;
 	}//getEvents
 	
@@ -94,23 +97,28 @@ public class EventList {
 
 	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
-// Wrapper methods for ArrayList
+// Wrapper methods for HashMap and List
 
-	public boolean add(Event event) {
-		return this.events.add(event);
+	public void add(Event event) {
+		this.events.get(event.getPacket().getId()).add(event.getEventType(), event);
 	}//add
 	
-	public void add(int index, Event event) {
-		this.events.add(index, event);
-	}//add
 	
-	public Event remove(int index) {
-		return this.events.remove(index);
+	public List<Event> remove(int key) {
+		return this.events.remove(key);
 	}//remove
+	
+	public List<Event> get(int key) {
+		return this.events.get(key);
+	}//get
 	
 	public void clear() {
 		this.events.clear();
 	}//clear
+	
+	public void put(Integer key, ArrayList<Event> list) {
+		this.events.put(key, list);
+	}//events
 	
 	
 	/**
@@ -121,12 +129,14 @@ public class EventList {
 	 * 		   returns null if it's not found
 	 */
 	public Event retrieveEvent(int packetId, int eventType) {
-		for (Event e: events) {
-			if (e.getEventType() == eventType && e.getPacket().getId() == packetId) {
-				return e;
-			}//if
-		}//for
-		return null;
+		ArrayList<Event> pEvents = this.events.get(packetId);
+		Event ev = null;
+		try {
+			ev = pEvents.get(eventType);
+		} catch (NullPointerException ne) {
+			return null;
+		}//catch
+		return ev;//pEvents.get(eventType);
 	}//retrieveEvent
 	
 	

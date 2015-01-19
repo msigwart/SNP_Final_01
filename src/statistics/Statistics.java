@@ -2,6 +2,7 @@ package statistics;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -120,7 +121,7 @@ public class Statistics implements Observer {
 	 */
 	private synchronized void writeEventIntoFile(Event event){
 		//System.out.printf("Statistics: Writing event into file...");
-		pWriter.printf("%s\n", event.toString());//TODO--> add to event ArrayLists for updateStatistics during simulation
+		pWriter.printf("%s\n", event.toString());//TODO--> add to event ArrayLists for updateStatistics during simulation (Might produce wrong simulation results
 		
 	}//writeEventIntoFile
 	
@@ -134,7 +135,9 @@ public class Statistics implements Observer {
 		//do some statistics work
 		
 		updateEventCounter(event);
-		updateAvrgQueueTimes(event);
+		if (event.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
+			updateAvrgQueueTimes(event);
+		}//if
 		
 	}//updateStatistics
 	
@@ -172,7 +175,7 @@ public class Statistics implements Observer {
 					newAvrgTime = (el.getAvrgQueueTime() + queueTime)/2;
 					el.setAvrgQueueTime(newAvrgTime);
 					
-					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
+					if (((double)queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
 						el.incCountDelayed();
 						newPercDelayed = (double)el.getCountDelayed()/el.getDequeueEventCount();
 						el.setPercentDelayed(newPercDelayed);
@@ -189,7 +192,7 @@ public class Statistics implements Observer {
 					newAvrgTime = (el.getAvrgQueueTime() + queueTime)/2;
 					el.setAvrgQueueTime(newAvrgTime);
 					
-					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
+					if (((double)queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
 						el.incCountDelayed();
 						newPercDelayed = (double)el.getCountDelayed()/el.getDequeueEventCount();
 						el.setPercentDelayed(newPercDelayed);
@@ -250,15 +253,30 @@ public class Statistics implements Observer {
 			// Read events
 			lines = 0;
 			String line = bReader.readLine();
-
+			System.out.printf("Reading tracefile...\n");
 			while(line != null){
 				Event e = this.createEventFromString(line);
-				updateStatistics(e);
 				if (e == null) {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
 				else {
-					eventLists.get(e.getPacket().getPriority()).add(e);
+					try {
+						if ( eventLists.get(e.getPacket().getPriority()).get(e.getPacket().getId()) == null) {
+							ArrayList<Event> newEventList = new ArrayList<Event>();
+							for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
+								newEventList.add(null);
+							}//for
+							newEventList.add(e.getEventType(), e);
+							eventLists.get(e.getPacket().getPriority()).put(e.getPacket().getId(), newEventList);
+						} else {
+							eventLists.get( e.getPacket().getPriority() ).get( e.getPacket().getId() ).add( e.getEventType(), e );
+						}//if
+						updateStatistics(e);
+
+					} catch (NullPointerException ne) {
+						System.out.printf("Caught expception\n");
+						continue;
+					}//catch
 				}//else
 				if (lines++ >= nextProgress) {
 					System.out.printf("%d Percent...\n", progressCounter++);
@@ -299,7 +317,6 @@ public class Statistics implements Observer {
 			eventType = Event.EVENT_TYPE_UNKNOWN;
 		}//if
 		
-		//boolean found = Arrays.asList(strEvent.split(" ")).contains("PACKET_PRIORITY_HIGH"); 		//TODO: Change to enum Priority
 		
 		if ( strEvent.toLowerCase().contains("PACKET_PRIORITY_HIGH".toLowerCase()) ) {
 			packetPriority = Priority.PACKET_PRIORITY_HIGH;
@@ -367,19 +384,13 @@ public class Statistics implements Observer {
 	private long getAverageQueueTime(Priority p) {
 		long sumQueueTime = 0L;
 		int eventCount = 0;
+		ArrayList<Event> events;
 		
-		for (Event en: eventLists.get(p).getEvents()) {
-			if (en.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
-				for (Event de: eventLists.get(p).getEvents()) {
-					if (de.getEventType() == Event.EVENT_TYPE_DEQUEUE && de.getPacket().getId() == en.getPacket().getId()) {
-						sumQueueTime += (de.getCreationTime() - en.getCreationTime());
-						eventCount++;
-						break;
-					}//if
-				}//for
-			}//if
+		for (int i=0; i<Packet.id; i++) {
+			events = eventLists.get(p).getEvents().get(i);
+			sumQueueTime += events.get(Event.EVENT_TYPE_DEQUEUE).getCreationTime() - events.get(Event.EVENT_TYPE_ENQUEUE).getCreationTime();
+			eventCount++;
 		}//for
-		
 		
 		if (eventCount == 0) {
 			return 0;
@@ -395,33 +406,14 @@ public class Statistics implements Observer {
 	 */
 	private int getEventCount(Priority p, int eventType) {
 		int count = 0;
-		for (Event e: eventLists.get(p).getEvents()) {
-			if (e.getEventType() == eventType) {
+		for (int i=0; i<Packet.id; i++) {
+			if (eventLists.get(p).get(i).get(eventType) != null) {
 				count++;
 			}//if
 		}//for
 		
 		return count;
-		/*switch (priority) {
-			case PACKET_PRIORITY_HIGH:
-				for (Event e: eventsPrio) {
-					if (e.getEventType() == eventType) {
-						count++;
-					}//if
-				}//for
-				break;
-			case PACKET_PRIORITY_LOW:
-				for (Event e: eventsNonPrio) {
-					if (e.getEventType() == eventType) {
-						count++;
-					}//if
-				}//for
-				break;
-			default:
-				break;
-		}//switch
 
-		return count;*/
 	}//getEventCount
 	
 	public void countAllEvents() {
@@ -446,8 +438,10 @@ public class Statistics implements Observer {
 	public void printEvents() {
 		for (Priority p: Priority.values()) {
 			System.out.printf("\n%s:\n", p.toString());
-			for (Event e: eventLists.get(p).getEvents()) {
-				System.out.printf("%s\n", e.toString());
+			for (int i=0; i<Packet.id; i++) {
+				for (Event e: eventLists.get(p).get(i)) {
+					System.out.printf("%s\n", e.toString());
+				}//for
 			}//for
 		}//for
 	}//printEvents
