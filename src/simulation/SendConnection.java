@@ -148,6 +148,7 @@ public class SendConnection extends Observable implements Runnable {
 					if (!queues.get(p).isEmpty()) {
 						packet = dequeuePacket(p);
 						currentTime = newTime;
+						break;
 					}//if
 				}//for
 				
