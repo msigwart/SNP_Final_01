@@ -47,7 +47,7 @@ public class Simulation {
 
 
 		// Create Statistics object
-		Statistics stats = new Statistics("output/ouput.txt");
+		Statistics stats = new Statistics("output/output.txt");
 		
 		// Create SendConnection
 		SendConnection sc = new SendConnection(SERVER_RUNTIME, SERVER_SEND_SPEED, SERVER_QUEUE_SIZE, stats);

@@ -29,7 +29,7 @@ public class Event {
 		this.creationTime = System.nanoTime();
 	}//Constructor
 	
-	Event(int eventType, long creationTime, Packet packet){
+	public Event(int eventType, long creationTime, Packet packet){
 		this.eventType = eventType;
 		this.creationTime = creationTime;
 		this.packet = packet;
