@@ -165,14 +165,14 @@ public class Statistics implements Observer {
 		double newPercDelayed;
 		
 		EventList el = eventLists.get(event.getPacket().getPriority());
-		System.out.printf("%s old average: %d\n", event.getPacket().getPriority(), el.getAvrgQueueTime());
+		//System.out.printf("%s old average: %d\n", event.getPacket().getPriority(), el.getAvrgQueueTime());
 		for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
 			if (i==event.getEventType()) {
 				correspondingEvent = el.retrieveCorrespondingEvent( event.getPacket().getId(), i );
 				
 				if (correspondingEvent != null) {
 					queueTime = event.getCreationTime() - correspondingEvent.getCreationTime();
-					System.out.printf("Packet %d -- %s new queueTime: %d\n", event.getPacket().getId(), event.getPacket().getPriority(), queueTime);
+					//System.out.printf("Packet %d -- %s new queueTime: %d\n", event.getPacket().getId(), event.getPacket().getPriority(), queueTime);
 					if (!el.isAverageSet()) {
 						el.setAvrgQueueTime(queueTime);		// First average calculation --> don't divide by 2!!!
 						System.out.printf("FIRST %s new average: %d\n", event.getPacket().getPriority(), queueTime);
@@ -180,7 +180,7 @@ public class Statistics implements Observer {
 					} else {
 						newAvrgTime = ((el.getAvrgQueueTime() + queueTime)/2);
 						el.setAvrgQueueTime(newAvrgTime);
-						System.out.printf("%s new average: %d\n", event.getPacket().getPriority(), newAvrgTime);
+						//System.out.printf("%s new average: %d\n", event.getPacket().getPriority(), newAvrgTime);
 					}//if
 					
 					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
