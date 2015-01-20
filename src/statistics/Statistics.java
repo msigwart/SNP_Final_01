@@ -42,6 +42,7 @@ public class Statistics implements Observer {
 	private EnumMap<Priority, EventList> eventLists;
 	
 	private double percAllDelayed;
+	private double averageQueueTime;		//in microseconds
 	
 
 	
@@ -59,6 +60,7 @@ public class Statistics implements Observer {
 			this.eventLists.put(p, new EventList());
 		}//for
 		this.percAllDelayed			= 0.0;
+		this.averageQueueTime		= 0.0;
 		
 		initializeStatistics();
 	}//Constructor
@@ -159,39 +161,9 @@ public class Statistics implements Observer {
 	
 	
 	public void updateAvrgQueueTimes(Event event) {
-		Event correspondingEvent = null;					// The corresponding enqueue Event
-		long queueTime;
-		long newAvrgTime;
-		double newPercDelayed;
-		
+
 		EventList el = eventLists.get(event.getPacket().getPriority());
-		//System.out.printf("%s old average: %d\n", event.getPacket().getPriority(), el.getAvrgQueueTime());
-		for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
-			if (i==event.getEventType()) {
-				correspondingEvent = el.retrieveCorrespondingEvent( event.getPacket().getId(), i );
-				
-				if (correspondingEvent != null) {
-					queueTime = event.getCreationTime() - correspondingEvent.getCreationTime();
-					//System.out.printf("Packet %d -- %s new queueTime: %d\n", event.getPacket().getId(), event.getPacket().getPriority(), queueTime);
-					if (!el.isAverageSet()) {
-						el.setAvrgQueueTime(queueTime);		// First average calculation --> don't divide by 2!!!
-						System.out.printf("FIRST %s new average: %d\n", event.getPacket().getPriority(), queueTime);
-						el.setHasAverage(true);
-					} else {
-						newAvrgTime = ((el.getAvrgQueueTime() + queueTime)/2);
-						el.setAvrgQueueTime(newAvrgTime);
-						//System.out.printf("%s new average: %d\n", event.getPacket().getPriority(), newAvrgTime);
-					}//if
-					
-					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
-						el.incCountDelayed();
-						newPercDelayed = (double)el.getCountDelayed()/el.getDequeueEventCount();
-						el.setPercentDelayed(newPercDelayed);
-						//percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);	//TODO update!!!
-					}//if
-				}//if
-			}//if
-		}//for
+		el.updateAvrgQueueTime(event);
 		
 		
 	}//updateAvrgQueueTimes
