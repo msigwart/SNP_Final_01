@@ -171,11 +171,43 @@ public class EventList {
 	
 	
 	
+	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
+// Update EventList statistics
+	
+	public void updateEventListStats(Event event) {
+		updateEventCounter(event);
+		
+		if (event.getEventType() == Event.EVENT_TYPE_DEQUEUE) {
+			updateAvrgQueueTime(event);
+		}//if
+	}//updateEventListStats
+	
+	
+	/**
+	 * Updates the event counters
+	 * @param event
+	 */
+	private void updateEventCounter(Event event) {
+		switch (event.getEventType()) {
+			
+			case Event.EVENT_TYPE_ENQUEUE:
+				incEnqueueEventCount();
+				break;
+			
+			case Event.EVENT_TYPE_DEQUEUE:
+				incDequeueEventCount();
+				break;
+		}//switch
+	}//updateEventCounter
+	
+	
+	
 	/**
 	 * Updates the averageQueueTime
 	 * @param event the event that causes the update
 	 */
-	public void updateAvrgQueueTime(Event event) {
+	private void updateAvrgQueueTime(Event event) {
 		Event correspondingEvent = null;					// The corresponding enqueue Event
 		long queueTime;
 		long newAvrgTime;
@@ -209,7 +241,6 @@ public class EventList {
 				}//if
 			}//if
 		}//for
-		
 		
 	}//updateAvrgQueueTimes
 	
