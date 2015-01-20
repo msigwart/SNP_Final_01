@@ -64,7 +64,7 @@ public class Statistics implements Observer {
 		}//for
 		this.totalEnEvents			= 0;
 		this.totalDeEvents			= 0;
-		this.percTotalDelayed			= 0.0;
+		this.percTotalDelayed		= 0.0;
 		this.totalDelayed			= 0;
 		this.averageQueueTime		= 0.0;
 		
@@ -353,21 +353,8 @@ public class Statistics implements Observer {
 	 * Return the average time spent by packet in the queue
 	 * @return returns the average queue time in nanoseconds
 	 */
-	private long getAverageQueueTime(Priority p) {
-		long sumQueueTime = 0L;
-		int eventCount = 0;
-		ArrayList<Event> events;
-		
-		for (int i=0; i<Packet.id; i++) {
-			events = eventLists.get(p).getEvents().get(i);
-			sumQueueTime += events.get(Event.EVENT_TYPE_DEQUEUE).getCreationTime() - events.get(Event.EVENT_TYPE_ENQUEUE).getCreationTime();
-			eventCount++;
-		}//for
-		
-		if (eventCount == 0) {
-			return 0;
-		} else return sumQueueTime/eventCount;
-		
+	public double getAverageQueueTime(Priority p) {
+		return averageQueueTime;
 	}//getAverageQueueTime
 	
 	
@@ -428,6 +415,7 @@ public class Statistics implements Observer {
 		printEventStatistics();
 		printQueueStatistics();
 		printPacketStatistics();
+		printSimulationAnalysis();
 		
 	}//printStatistics
 	
@@ -478,10 +466,23 @@ public class Statistics implements Observer {
 	}//printPacketStatistics
 	
 	
+	private void printSimulationAnalysis() {
+		printStatTitle("Simulation Analysis:");
+		System.out.printf("M       = %7.2f µs\n", averageQueueTime/Time.NANOSEC_PER_MICROSEC);
+		System.out.printf("1.1 * M = %7.2f µs\n", averageQueueTime*1.1/Time.NANOSEC_PER_MICROSEC);
+		System.out.printf("1.5 * M = %7.2f µs\n", averageQueueTime*1.5/Time.NANOSEC_PER_MICROSEC);
+		System.out.printf("4.0 * M = %7.2f µs\n", averageQueueTime*4.0/Time.NANOSEC_PER_MICROSEC);
+
+	}//printSimulationAnalysis
+	
+	
 	private void printStatTitle(String statTitle) {
 		//System.out.printf("\n=== %-12s ====================================================\n\n", statTitle);
 		System.out.printf("\n>>>>>>>>>> %-12s <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n", statTitle);
 	}//printStatTitle
+	
+	
+
 
 
 	

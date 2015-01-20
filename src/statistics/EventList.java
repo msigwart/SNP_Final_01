@@ -11,12 +11,12 @@ import simulation.Time;
 public class EventList {
 	
 	private Map<Integer, ArrayList<Event>> 	events;
-	private long 			 			avrgQueueTime;			// average queuing time in nanoseconds
-	private int 			 			enqueueEventCount;
-	private int 			 			dequeueEventCount;
-	private int 			 			countDelayed;
-	private double 			 			percentDelayed;
-	private boolean						hasAverage;
+	private long 			 				avrgQueueTime;			// average queuing time in nanoseconds
+	private int 			 				enqueueEventCount;
+	private int 			 				dequeueEventCount;
+	private int 			 				countDelayed;
+	private double 			 				percentDelayed;
+	private boolean							hasAverage;
 	
 	
 
