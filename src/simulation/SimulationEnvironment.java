@@ -9,8 +9,8 @@ public class SimulationEnvironment {
 	
 	public static void main(String[] args) {
 		int runs;
-		ArrayList<Simulator> simulators = new ArrayList<Simulator>();
-		ArrayList<Statistics> stats 	= new ArrayList<Statistics>();
+		ArrayList <Simulator> simulators = new ArrayList<Simulator>();
+		ArrayList <Statistics> stats 	= new ArrayList<Statistics>();
 		Scanner sc = new Scanner(System.in);
 		
 		System.out.print("How many simulations do you want to do?:");
@@ -49,9 +49,11 @@ public class SimulationEnvironment {
 		for(int i = 0; i < runs; i++){
 			System.out.println("\nCollecting statistics for simulation " + (i+1) + ":");
 			stats.get(i).collectStatistics();
-			System.out.println("\nPrinting statistics for simulation " + (i+1) + ":");
+			System.out.println("\n################ Simulation " + (i+1) + " ##########################");
+			System.out.println(simulators.get(i).printSimulationData());
 			stats.get(i).printStatistics();
 		}//for
-	}
-
-}
+		
+	}//main
+	
+}//SimulationEvironment

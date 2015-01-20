@@ -242,4 +242,23 @@ public class Simulator implements Observer{
 	public Statistics getStatistics(){
 		return this.stats;
 	}
+	
+	public String printSimulationData(){
+		String str = new String();
+		
+		str += "\n>>>>>>>>>>>>>> Clients Information <<<<<<<<<<<<<<<<<<\n\n";
+		str += "\tNumber of Clients: " 				+ getNumClients() 			 + "\n";
+		str += "\tNumber of Priority Clients: " 	+ getNumPriorityClients() 	 + "\n";
+		str += "\tClient Send Min Interval: " 		+ getClientSendMinInterval() + "\n";
+		str += "\tClient Send Max Interval: " 		+ getClientSendMaxInterval() + "\n";
+		str += "\tNumber of packets per client: " 	+ getClientNumPackets() 	 + "\n";
+		str += "\tNumber of packets per client: " 	+ getClientNumPackets() 	 + "\n";
+		
+		str += "\n>>>>>>>>>>>>>> Server Information <<<<<<<<<<<<<<<<<<<\n\n";
+		str += "\tServer Runtime: " 				+ getServerRuntime() 		 + " sec\n";
+		str += "\tServer Send Speed: " 				+ getServerSendSpeed() 		 + " Mb/s\n";
+		str += "\tServer Queue Size: " 				+ getServerQueueSize() 		 + "\n";
+		
+		return str;
+	}
 }
