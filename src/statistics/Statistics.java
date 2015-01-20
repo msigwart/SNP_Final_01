@@ -139,7 +139,7 @@ public class Statistics implements Observer {
 		
 		updateEventCounter(event);
 		if (event.getEventType() == Event.EVENT_TYPE_DEQUEUE) {
-			updateAvrgQueueTimes(event);
+			updateEventListStats(event);
 		}//if
 		
 	}//updateStatistics
@@ -160,7 +160,10 @@ public class Statistics implements Observer {
 	}//updateEventCounter
 	
 	
-	public void updateAvrgQueueTimes(Event event) {
+	/*
+	 * 
+	 */
+	public void updateEventListStats(Event event) {
 
 		EventList el = eventLists.get(event.getPacket().getPriority());
 		el.updateAvrgQueueTime(event);
