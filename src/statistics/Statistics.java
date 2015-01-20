@@ -41,7 +41,11 @@ public class Statistics implements Observer {
 	
 	private EnumMap<Priority, EventList> eventLists;
 	
-	private double percAllDelayed;
+	private int 	totalEnEvents;
+	private int		totalDeEvents;
+	private double 	averageQueueTime;		//in nanoseconds
+	private double 	percTotalDelayed;
+	private int		totalDelayed;
 	
 
 	
@@ -58,7 +62,11 @@ public class Statistics implements Observer {
 		for (Priority p: Priority.values()) {
 			this.eventLists.put(p, new EventList());
 		}//for
-		this.percAllDelayed			= 0.0;
+		this.totalEnEvents			= 0;
+		this.totalDeEvents			= 0;
+		this.percTotalDelayed			= 0.0;
+		this.totalDelayed			= 0;
+		this.averageQueueTime		= 0.0;
 		
 		initializeStatistics();
 	}//Constructor
@@ -135,66 +143,44 @@ public class Statistics implements Observer {
 	private void updateStatistics(Event event) {
 		//do some statistics work
 		
-		updateEventCounter(event);
-		if (event.getEventType() == Event.EVENT_TYPE_DEQUEUE) {
-			updateAvrgQueueTimes(event);
-		}//if
+		EventList el = eventLists.get(event.getPacket().getPriority());
+		el.updateEventListStats(event);
+		updateCounters();
+		updateAvrgQueueTime();
+
 		
 	}//updateStatistics
 	
 	
 	
-	private void updateEventCounter(Event event) {
-		switch (event.getEventType()) {
-			
-			case Event.EVENT_TYPE_ENQUEUE:
-				eventLists.get(event.getPacket().getPriority()).incEnqueueEventCount();
-				break;
-			
-			case Event.EVENT_TYPE_DEQUEUE:
-				eventLists.get(event.getPacket().getPriority()).incDequeueEventCount();
-				break;
-		}//switch
-	}//updateEventCounter
 	
-	
-	public void updateAvrgQueueTimes(Event event) {
-		Event correspondingEvent = null;					// The corresponding enqueue Event
-		long queueTime;
-		long newAvrgTime;
-		double newPercDelayed;
-		
-		EventList el = eventLists.get(event.getPacket().getPriority());
-		//System.out.printf("%s old average: %d\n", event.getPacket().getPriority(), el.getAvrgQueueTime());
-		for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
-			if (i==event.getEventType()) {
-				correspondingEvent = el.retrieveCorrespondingEvent( event.getPacket().getId(), i );
-				
-				if (correspondingEvent != null) {
-					queueTime = event.getCreationTime() - correspondingEvent.getCreationTime();
-					//System.out.printf("Packet %d -- %s new queueTime: %d\n", event.getPacket().getId(), event.getPacket().getPriority(), queueTime);
-					if (!el.isAverageSet()) {
-						el.setAvrgQueueTime(queueTime);		// First average calculation --> don't divide by 2!!!
-						System.out.printf("FIRST %s new average: %d\n", event.getPacket().getPriority(), queueTime);
-						el.setHasAverage(true);
-					} else {
-						newAvrgTime = ((el.getAvrgQueueTime() + queueTime)/2);
-						el.setAvrgQueueTime(newAvrgTime);
-						//System.out.printf("%s new average: %d\n", event.getPacket().getPriority(), newAvrgTime);
-					}//if
-					
-					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > DEFAULT_DELAY) {	//update delayed count
-						el.incCountDelayed();
-						newPercDelayed = (double)el.getCountDelayed()/el.getDequeueEventCount();
-						el.setPercentDelayed(newPercDelayed);
-						//percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);	//TODO update!!!
-					}//if
-				}//if
+	private void updateAvrgQueueTime() {
+		this.averageQueueTime = 0.0;
+		for (Priority p: Priority.values()) {
+			EventList el = eventLists.get(p);
+			if (this.averageQueueTime == 0.0) {
+				this.averageQueueTime = el.getAvrgQueueTime();
+			} else {
+				this.averageQueueTime = (double)((this.averageQueueTime+el.getAvrgQueueTime())/2);
 			}//if
 		}//for
+	}//updateAvrgQueueTime
+	
+	private void updateCounters() {
+		this.totalEnEvents 	= 0;
+		this.totalDeEvents 	= 0;
+		this.totalDelayed	= 0;
+		this.percTotalDelayed = 0;
+
+		for (Priority p: Priority.values()) {
+			EventList el = eventLists.get(p);
+			this.totalEnEvents += el.getEnqueueEventCount();
+			this.totalDeEvents += el.getDequeueEventCount();
+			this.totalDelayed  += el.getCountDelayed();
+		}//for
 		
-		
-	}//updateAvrgQueueTimes
+		this.percTotalDelayed = (double)totalDelayed/totalDeEvents;
+	}//updateCounters
 	
 
 	
@@ -456,8 +442,8 @@ public class Statistics implements Observer {
 			System.out.printf("%s:\t%9d\t%9d\t| %9d\n", p.toString(), enEvents, deEvents, enEvents+deEvents);
 			
 		}//for
-		//System.out.printf("========================================================+===========\n" +
-		//				  "Total Events \t\t%9d\t%9d\t| %9d\n\n", enEventsPrio+enEventsNonPrio, deEventsPrio+deEventsNonPrio, eventsNonPrio.size()+eventsPrio.size());
+		System.out.printf("========================================================+===========\n" +
+						  "Total Events \t\t%9d\t%9d\t| %9d\n\n", totalEnEvents, totalDeEvents, totalEnEvents+totalDeEvents);
 		
 	}//printEventStatistics
 	
@@ -466,7 +452,7 @@ public class Statistics implements Observer {
 		for (Priority p: Priority.values()) {
 			System.out.printf("%s:\t%7.2f µs\n", p, (double)eventLists.get(p).getAvrgQueueTime()/Time.NANOSEC_PER_MICROSEC);
 		}//for
-		//System.out.printf("Total:\t\t\t%9d µs\n\n", ( (avrgQueueTimeNonPrio+avrgQueueTimePrio)/2) / Time.NANOSEC_PER_MICROSEC );	//TODO only if both != 0
+		System.out.printf("Total:\t\t\t%7.2f µs\n\n", (this.averageQueueTime/Time.NANOSEC_PER_MICROSEC) );	//TODO only if both != 0
 		// If 'µ' is not displayed correctly, go to Eclipse > Preferences > General > Workspace > Text File Encoding	
 	}//printQueueStatistics
 	
@@ -485,11 +471,10 @@ public class Statistics implements Observer {
 			System.out.printf("%s:\t%9d\t%9d\t| %9f\n", p, countDelayed, deEvents, percDelayed*100);
 
 		}//for
-		/*System.out.printf("========================================================+===========\n" +		//TODO
-						  "Total Packets \t\t%9d\t%9d\t| %9f\n", countPrioDelayed+countNonPrioDelayed, 
-						  										deEventsPrio+deEventsNonPrio, 
-						  										percAllDelayed*100);
-						  							*/
+		System.out.printf("========================================================+===========\n" +		//TODO
+						  "Total Packets \t\t%9d\t%9d\t| %9f\n", totalDelayed, 
+						  										totalDeEvents, 
+						  										percTotalDelayed*100);
 	}//printPacketStatistics
 	
 	

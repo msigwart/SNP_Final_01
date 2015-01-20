@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import simulation.Time;
+
 
 public class EventList {
 	
@@ -166,6 +168,81 @@ public class EventList {
 				return null;
 		}//switch
 	}//retrieveCorrespondingEvent
+	
+	
+	
+	
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
+// Update EventList statistics
+	
+	public void updateEventListStats(Event event) {
+		updateEventCounter(event);
+		
+		if (event.getEventType() == Event.EVENT_TYPE_DEQUEUE) {
+			updateAvrgQueueTime(event);
+		}//if
+	}//updateEventListStats
+	
+	
+	/**
+	 * Updates the event counters
+	 * @param event
+	 */
+	private void updateEventCounter(Event event) {
+		switch (event.getEventType()) {
+			
+			case Event.EVENT_TYPE_ENQUEUE:
+				incEnqueueEventCount();
+				break;
+			
+			case Event.EVENT_TYPE_DEQUEUE:
+				incDequeueEventCount();
+				break;
+		}//switch
+	}//updateEventCounter
+	
+	
+	
+	/**
+	 * Updates the averageQueueTime
+	 * @param event the event that causes the update
+	 */
+	private void updateAvrgQueueTime(Event event) {
+		Event correspondingEvent = null;					// The corresponding enqueue Event
+		long queueTime;
+		long newAvrgTime;
+		double newPercDelayed;
+		
+		//EventList el = eventLists.get(event.getPacket().getPriority());
+		//System.out.printf("%s old average: %d\n", event.getPacket().getPriority(), el.getAvrgQueueTime());
+		for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
+			if (i==event.getEventType()) {
+				correspondingEvent = retrieveCorrespondingEvent( event.getPacket().getId(), i );
+				
+				if (correspondingEvent != null) {
+					queueTime = event.getCreationTime() - correspondingEvent.getCreationTime();
+					//System.out.printf("Packet %d -- %s new queueTime: %d\n", event.getPacket().getId(), event.getPacket().getPriority(), queueTime);
+					if (!isAverageSet()) {
+						setAvrgQueueTime(queueTime);		// First average calculation --> don't divide by 2!!!
+						System.out.printf("FIRST %s new average: %d\n", event.getPacket().getPriority(), queueTime);
+						setHasAverage(true);
+					} else {
+						newAvrgTime = ((getAvrgQueueTime() + queueTime)/2);
+						setAvrgQueueTime(newAvrgTime);
+						//System.out.printf("%s new average: %d\n", event.getPacket().getPriority(), newAvrgTime);
+					}//if
+					
+					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > Statistics.DEFAULT_DELAY) {	//update delayed count
+						incCountDelayed();
+						newPercDelayed = (double)getCountDelayed()/getDequeueEventCount();
+						setPercentDelayed(newPercDelayed);
+						//percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);	//TODO update!!!
+					}//if
+				}//if
+			}//if
+		}//for
+		
+	}//updateAvrgQueueTimes
 	
 	
 	
