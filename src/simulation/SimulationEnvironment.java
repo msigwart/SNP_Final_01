@@ -3,12 +3,14 @@ package simulation;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import statistics.Statistics;
+
 public class SimulationEnvironment {
 	
 	public static void main(String[] args) {
 		int runs;
-		Simulator simulator = null;
-		ArrayList<Simulator> simulators = new ArrayList<>();
+		ArrayList<Simulator> simulators = new ArrayList<Simulator>();
+		ArrayList<Statistics> stats 	= new ArrayList<Statistics>();
 		Scanner sc = new Scanner(System.in);
 		
 		System.out.print("How many simulations do you want to do?:");
@@ -38,12 +40,18 @@ public class SimulationEnvironment {
 					simulators.get(i).runSimulation(); //runs the simulation
 				}
 				else{
+					stats.add(simulators.get(i).getStatistics()); //Saves the statistics of the last simulator
 					i++; //will pass to the next simulator
 				}//if
 			}//if
 		}//for
 		
-		
+		for(int i = 0; i < runs; i++){
+			System.out.println("\nCollecting statistics for simulation " + (i+1) + ":");
+			stats.get(i).collectStatistics();
+			System.out.println("\nPrinting statistics for simulation " + (i+1) + ":");
+			stats.get(i).printStatistics();
+		}//for
 	}
 
 }

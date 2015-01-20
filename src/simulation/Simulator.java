@@ -180,7 +180,7 @@ public class Simulator implements Observer{
 	public void update(Observable arg0, Object arg1) {
 		switch ((int)arg1) {
 			case SendConnection.SERVER_EVENT_TERMINATED:
-				stats.printStatistics();
+				//stats.printStatistics();
 				running = false;
 				break;
 			default:
@@ -188,12 +188,58 @@ public class Simulator implements Observer{
 		}//switch	
 	}
 	
+	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+	//Getters
 	
 	public boolean isRunning(){
-		return running;
+		return this.running;
 	}
 	
 	public boolean getStarted(){
-		return started;
+		return this.started;
+	}
+	
+	public int getClientSendInterval() {
+		return clientSendInterval;
+	}
+
+	public int getClientSendMinInterval() {
+		return clientSendMinInterval;
+	}
+
+	public int getClientSendMaxInterval() {
+		return clientSendMaxInterval;
+	}
+
+	public int getClientNumPackets() {
+		return clientNumPackets;
+	}
+
+	public int getNumClients() {
+		return numClients;
+	}
+
+	public int getNumPriorityClients() {
+		return numPriorityClients;
+	}
+
+	public int getServerRuntime() {
+		return serverRuntime;
+	}
+
+	public int getServerSendSpeed() {
+		return serverSendSpeed;
+	}
+
+	public long getMicSecondsPerPacket() {
+		return micSecondsPerPacket;
+	}
+
+	public int getServerQueueSize() {
+		return serverQueueSize;
+	}
+	
+	public Statistics getStatistics(){
+		return this.stats;
 	}
 }
