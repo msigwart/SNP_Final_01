@@ -5,7 +5,6 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.io.*;
 
 
@@ -13,6 +12,7 @@ import simulation.Packet;
 import simulation.Priority;
 import simulation.SendConnection;
 import simulation.Simulation;
+import simulation.Simulator;
 import simulation.Time;
 
 
@@ -25,7 +25,7 @@ import simulation.Time;
  */
 public class Statistics implements Observer {
 	
-	public static final int DEFAULT_DELAY = 200;//Microseconds
+	public static final double DEFAULT_DELAY = 200;//Microseconds
 	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 // Fields for file I/O
@@ -44,6 +44,7 @@ public class Statistics implements Observer {
 	private int 	totalEnEvents;
 	private int		totalDeEvents;
 	private double 	averageQueueTime;		//in nanoseconds
+	private double	delay;
 	private double 	percTotalDelayed;
 	private int		totalDelayed;
 	
@@ -60,10 +61,11 @@ public class Statistics implements Observer {
 		this.outputFile = outputFile;
 		this.eventLists = new EnumMap<>(Priority.class);
 		for (Priority p: Priority.values()) {
-			this.eventLists.put(p, new EventList());
+			this.eventLists.put(p, new EventList(p));
 		}//for
 		this.totalEnEvents			= 0;
 		this.totalDeEvents			= 0;
+		this.delay					= DEFAULT_DELAY;
 		this.percTotalDelayed		= 0.0;
 		this.totalDelayed			= 0;
 		this.averageQueueTime		= 0.0;
@@ -134,60 +136,7 @@ public class Statistics implements Observer {
 		
 	}//writeEventIntoFile
 	
-	
-	/**
-	 * Updates some statistics. Is called when a new event is written to file
-	 * Can only update statistics when the events are also added to the corresponding event lists.
-	 * @param event the newly arrived event
-	 */
-	private void updateStatistics(Event event) {
-		//do some statistics work
 		
-		EventList el = eventLists.get(event.getPacket().getPriority());
-		el.updateEventListStats(event);
-		updateCounters();
-		updateAvrgQueueTime();
-
-		
-	}//updateStatistics
-	
-	
-	
-	
-	private void updateAvrgQueueTime() {
-		this.averageQueueTime = 0.0;
-		for (Priority p: Priority.values()) {
-			EventList el = eventLists.get(p);
-			if (this.averageQueueTime == 0.0) {
-				this.averageQueueTime = el.getAvrgQueueTime();
-			} else {
-				this.averageQueueTime = (double)((this.averageQueueTime+el.getAvrgQueueTime())/2);
-			}//if
-		}//for
-	}//updateAvrgQueueTime
-	
-	private void updateCounters() {
-		this.totalEnEvents 	= 0;
-		this.totalDeEvents 	= 0;
-		this.totalDelayed	= 0;
-		this.percTotalDelayed = 0;
-
-		for (Priority p: Priority.values()) {
-			EventList el = eventLists.get(p);
-			this.totalEnEvents += el.getEnqueueEventCount();
-			this.totalDeEvents += el.getDequeueEventCount();
-			this.totalDelayed  += el.getCountDelayed();
-		}//for
-		
-		this.percTotalDelayed = (double)totalDelayed/totalDeEvents;
-	}//updateCounters
-	
-
-	
-	
-	
-//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-// Different update statistics methods as well as helper methods
 
 
 
@@ -236,12 +185,21 @@ public class Statistics implements Observer {
 						if ( eventLists.get(e.getPacket().getPriority()).get(e.getPacket().getId()) == null) {
 							ArrayList<Event> newEventList = new ArrayList<Event>();
 							for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
-								newEventList.add(null);
+								newEventList.add(i, null);
 							}//for
-							newEventList.add(e.getEventType(), e);
+							newEventList.set(e.getEventType(), e);		//replace existing null element
 							eventLists.get(e.getPacket().getPriority()).put(e.getPacket().getId(), newEventList);
+							
+//							if (e.getEventType() == Event.EVENT_TYPE_DEQUEUE) {
+//								System.out.printf("WARNING: Writing DEQUEUE event for packet %d first\n", e.getPacket().getId());
+//							}
 						} else {
-							eventLists.get( e.getPacket().getPriority() ).get( e.getPacket().getId() ).add( e.getEventType(), e );
+							eventLists.get(e.getPacket().getPriority()).set(e);		//replace existing null element
+//							if (e.getEventType() == Event.EVENT_TYPE_ENQUEUE) {
+//								System.out.printf("WARNING: Writing ENQUEUE event for packet %d second\n", e.getPacket().getId());
+//								System.out.printf("Packet %d: %s\n", e.getPacket().getId(), 
+//										eventLists.get(e.getPacket().getPriority()).get(e.getPacket().getId()) );
+//							}//if
 						}//if
 						updateStatistics(e);
 
@@ -343,6 +301,13 @@ public class Statistics implements Observer {
 	public void collectStatistics() {
 		System.out.printf("Collecting statistics...\n");
 		readEventsFromFile();
+		for (Priority p: Priority.values()) {
+			System.out.printf("Queue %s size: %d\n", p, eventLists.get(p).size());
+			for (Map.Entry<Integer, ArrayList<Event>> e: eventLists.get(p).getEvents().entrySet()) {
+				eventLists.get(p).addQueueTime(e.getKey());
+			}//for
+		}//for
+		updateAvrgQueueTime();
 		//printEvents();
 		//avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
 		//avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
@@ -350,12 +315,76 @@ public class Statistics implements Observer {
 
 
 	/**
+	 * Updates some statistics. Is called when a new event is written to file
+	 * Can only update statistics when the events are also added to the corresponding event lists.
+	 * @param event the newly arrived event
+	 */
+	private void updateStatistics(Event event) {
+		//do some statistics work
+		
+		EventList el = eventLists.get(event.getPacket().getPriority());
+		el.updateEventListStats(event);
+		updateCounters();
+		//updateAvrgQueueTime();
+
+		
+	}//updateStatistics
+	
+	/**
+	 * Updates total enqueue and dequeue counters
+	 */
+	private void updateCounters() {
+		this.totalEnEvents 	= 0;
+		this.totalDeEvents 	= 0;
+
+		for (Priority p: Priority.values()) {
+			EventList el = eventLists.get(p);
+			this.totalEnEvents += el.getEnqueueEventCount();
+			this.totalDeEvents += el.getDequeueEventCount();
+		}//for
+		
+	}//updateCounters
+	
+	
+	/**
+	 * Updates the total average time
+	 */
+	private void updateAvrgQueueTime() {
+		this.averageQueueTime = 0.0;
+		for (Priority p: Priority.values()) {
+			EventList el = eventLists.get(p);
+			if (this.averageQueueTime == 0.0) {
+				this.averageQueueTime = el.getAvrgQueueTime();
+			} else {
+				this.averageQueueTime = (double)((this.averageQueueTime+el.getAvrgQueueTime())/2);
+			}//if
+		}//for
+	}//updateAvrgQueueTime
+	
+	
+	private void calculateDelayStatistics(double delay) {
+		this.delay = delay;
+		this.totalDelayed	= 0;
+		this.percTotalDelayed = 0;
+		
+		for (Priority p: Priority.values()) {
+			eventLists.get(p).calculateDelayedCount(delay);
+			this.totalDelayed += eventLists.get(p).getCountDelayed();
+		}//for
+		this.percTotalDelayed = (double)totalDelayed/totalDeEvents;
+
+	}//calculateDelayStatistics
+
+	
+	/**
 	 * Return the average time spent by packet in the queue
 	 * @return returns the average queue time in nanoseconds
 	 */
 	public double getAverageQueueTime(Priority p) {
 		return averageQueueTime;
 	}//getAverageQueueTime
+	
+		
 	
 	
 	/**
@@ -374,6 +403,7 @@ public class Statistics implements Observer {
 		return count;
 
 	}//getEventCount
+	
 	
 	public void countAllEvents() {
 		
@@ -414,7 +444,8 @@ public class Statistics implements Observer {
 		System.out.printf("SendTime Server: %d µs/Packet --- %d ns/Packet\n", Simulation.MICSECONDS_PER_PACKET, Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC);
 		printEventStatistics();
 		printQueueStatistics();
-		printPacketStatistics();
+		calculateDelayStatistics(Statistics.DEFAULT_DELAY);
+		printDelayStatistics();
 		printSimulationAnalysis();
 		
 	}//printStatistics
@@ -445,9 +476,9 @@ public class Statistics implements Observer {
 	}//printQueueStatistics
 	
 	
-	public void printPacketStatistics() {
+	public void printDelayStatistics() {
 		printStatTitle("Packet Count:");
-		System.out.printf("Packets with delay of %d microseconds:\n", DEFAULT_DELAY);
+		System.out.printf("Packets with delay of %7.2f microseconds:\n", this.delay);
 		
 		System.out.printf("\n\t\t\t Delayed:\t    Total:\t| Percentage:\n" +
 				"--------------------------------------------------------+-----------\n");
@@ -466,12 +497,25 @@ public class Statistics implements Observer {
 	}//printPacketStatistics
 	
 	
-	private void printSimulationAnalysis() {
+	public void printSimulationAnalysis() {
 		printStatTitle("Simulation Analysis:");
-		System.out.printf("M       = %7.2f µs\n", averageQueueTime/Time.NANOSEC_PER_MICROSEC);
-		System.out.printf("1.1 * M = %7.2f µs\n", averageQueueTime*1.1/Time.NANOSEC_PER_MICROSEC);
-		System.out.printf("1.5 * M = %7.2f µs\n", averageQueueTime*1.5/Time.NANOSEC_PER_MICROSEC);
-		System.out.printf("4.0 * M = %7.2f µs\n", averageQueueTime*4.0/Time.NANOSEC_PER_MICROSEC);
+		System.out.printf("M       = %7.2f µs\n", Simulation.MICSECONDS_PER_PACKET*1.0);
+		System.out.printf("1.1 * M = %7.2f µs\n", Simulation.MICSECONDS_PER_PACKET*1.1);
+		System.out.printf("1.5 * M = %7.2f µs\n", Simulation.MICSECONDS_PER_PACKET*1.5);
+		System.out.printf("4.0 * M = %7.2f µs\n", Simulation.MICSECONDS_PER_PACKET*4.0);
+		
+		// 1.1 * M
+		calculateDelayStatistics(Simulation.MICSECONDS_PER_PACKET);
+		printDelayStatistics();
+		
+		// 1.5 * M
+		calculateDelayStatistics(Simulation.MICSECONDS_PER_PACKET*1.5);
+		printDelayStatistics();
+		
+		// 4.0 * M
+		calculateDelayStatistics(Simulation.MICSECONDS_PER_PACKET*4.0);
+		printDelayStatistics();
+		
 
 	}//printSimulationAnalysis
 	
