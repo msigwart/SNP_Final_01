@@ -25,8 +25,8 @@ public class Simulation {
 	public static final int NUM_OF_PRIORITY_CLIENTS		= 3;
 	
 	//Server globals
-	public static final int SERVER_RUNTIME 				= 10; //seconds
-	public static final int SERVER_SEND_SPEED			= 200; //Mbs
+	public static final int SERVER_RUNTIME 				= 180; //seconds
+	public static final int SERVER_SEND_SPEED			= 100; //Mbs
 	//public static final long SERVER_SEND_SPEED_MICRO	= SERVER_SEND_SPEED*1000000;
 	public static final long MICSECONDS_PER_PACKET		= PACKET_SIZE_BITS/SERVER_SEND_SPEED;		//ca. 122 µs/Packet
 	public static final int SERVER_QUEUE_SIZE 			= 1000000;

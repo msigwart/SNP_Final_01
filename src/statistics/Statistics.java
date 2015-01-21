@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.beans.EventSetDescriptor;
 import java.io.*;
 
 
@@ -145,37 +146,30 @@ public class Statistics implements Observer {
 	
 	/**
 	 * Reads all events from the output file and saves them into the corresponding event lists
+	 * @return returns the number of lines read
 	 */
-	public void readEventsFromFile(){
-
+	public int readEventsFromFile(int numOfLines){
+		int lines = 0;
+		
 		try {
-			int lines = 0;
 			int progressStep;
 			int nextProgress;
 			int progressCounter;
 			
-			//Count lines
-			while (bReader.readLine() != null) {
-				lines++;
-			}//while
-			bReader.close();
-			fStream.close();
-			
-			fStream = new FileInputStream(this.outputFile);
-			bReader = new BufferedReader(new InputStreamReader(fStream));
-			//System.out.printf("Total file size to read (in bytes) : %d\n", fStream.available());
-			System.out.printf("Total lines to read : %d\n", lines);
 			
 			//Calculate progress display
-			progressStep = lines/100;
+			progressStep = numOfLines/100;
 			nextProgress = progressStep;
 			progressCounter = 0;
 			
-			// Read events
-			lines = 0;
-			String line = bReader.readLine();
 			System.out.printf("Reading tracefile...\n");
-			while(line != null){
+			for (int i=0; i<numOfLines; i++) {
+				String line = bReader.readLine();
+				if (line == null) {
+					bReader.close();
+					System.out.printf("END OF FILE\n");
+					return lines;
+				}//if
 				Event e = this.createEventFromString(line);
 				if (e == null) {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
@@ -184,8 +178,8 @@ public class Statistics implements Observer {
 					try {
 						if ( eventLists.get(e.getPacket().getPriority()).get(e.getPacket().getId()) == null) {
 							ArrayList<Event> newEventList = new ArrayList<Event>();
-							for (int i=0; i<Event.NUMBER_OF_EVENTS; i++) {
-								newEventList.add(i, null);
+							for (int j=0; j<Event.NUMBER_OF_EVENTS; j++) {
+								newEventList.add(j, null);
 							}//for
 							newEventList.set(e.getEventType(), e);		//replace existing null element
 							eventLists.get(e.getPacket().getPriority()).put(e.getPacket().getId(), newEventList);
@@ -204,28 +198,23 @@ public class Statistics implements Observer {
 						updateStatistics(e);
 
 					} catch (NullPointerException ne) {
-						System.out.printf("Caught expception\n");
-						continue;
+						System.out.printf("Caught Null Pointer Exception\n");
+						return lines;
 					}//catch
 				}//else
-				if (lines++ >= nextProgress) {
+				/*if (i >= nextProgress) {
 					System.out.printf("%d Percent...\n", progressCounter++);
 					nextProgress += progressStep;
-				}//if
-				line = bReader.readLine();
-			}//while
-			
-		} catch (IOException ex) {
-            ex.printStackTrace();
+				}//if*/
+				lines++;
+			}//for
+		} catch (IOException e) {
+			e.printStackTrace();
 		} finally {
-			try {
-				bReader.close();
-				if (fStream != null)
-					fStream.close();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}//try
-		}//finally*/
+			return lines;
+		}//finally
+			
+			
 	}//readEventsFromFile
 	
 	
@@ -300,20 +289,92 @@ public class Statistics implements Observer {
 	 */
 	public void collectStatistics() {
 		System.out.printf("Collecting statistics...\n");
-		readEventsFromFile();
-		for (Priority p: Priority.values()) {
-			System.out.printf("Queue %s size: %d\n", p, eventLists.get(p).size());
-			for (Map.Entry<Integer, ArrayList<Event>> e: eventLists.get(p).getEvents().entrySet()) {
-				eventLists.get(p).addQueueTime(e.getKey());
+		
+		int numOfLines = readNumberOfLines();
+		System.out.printf("Total lines to read : %d\n", numOfLines);
+
+		if (numOfLines <= 100000) {
+			readEventsFromFile(numOfLines);
+			for (Priority p: Priority.values()) {
+				System.out.printf("Queue %s size: %d\n", p, eventLists.get(p).size());
+				for (Map.Entry<Integer, ArrayList<Event>> e: eventLists.get(p).getEvents().entrySet()) {
+					eventLists.get(p).addQueueTime(e.getKey());
+				}//for
 			}//for
-		}//for
-		updateAvrgQueueTime();
+			updateAvrgQueueTime();
+		} else {
+			int eventsRead = 0;
+			int readCycle = 1;
+
+			do {
+				eventsRead = readEventsFromFile(100000);
+
+				System.out.printf("Read %d events, Part %d\n", eventsRead, readCycle++);
+				
+				for (Priority p: Priority.values()) {
+					System.out.printf("Queue %s size: %d\n", p, eventLists.get(p).size());
+					for (Map.Entry<Integer, ArrayList<Event>> e: eventLists.get(p).getEvents().entrySet()) {
+						eventLists.get(p).addQueueTime(e.getKey());
+					}//for
+				}//for
+				System.out.printf("Delete processed events.\n");
+				updateAvrgQueueTime();
+				deleteProcessedEvents();
+				
+				System.out.printf("Deleted processed events.\n");
+				for (Priority p: Priority.values()) {
+					System.out.printf("%s events: %d\n", p, eventLists.get(p).size());
+				}//for
+			} while (eventsRead == 100000);
+		}//if
 		//printEvents();
 		//avrgQueueTimePrio = getAverageQueueTime(Priority.PACKET_PRIORITY_HIGH);
 		//avrgQueueTimeNonPrio = getAverageQueueTime(Priority.PACKET_PRIORITY_LOW);
 	}//collectingStatistics
 
+	
+	private void deleteProcessedEvents() {
+		for (Priority p: Priority.values()) {
+			EventList el = eventLists.get(p);
+			el.getQueueTimes().clear();
+			ArrayList<Integer> packetsToRemove = new ArrayList<Integer>();
 
+			for (Map.Entry<Integer, ArrayList<Event>> e: el.getEvents().entrySet()) {
+				if (e.getValue().get(Event.EVENT_TYPE_DEQUEUE) != null) {
+					packetsToRemove.add(e.getKey());
+				}//if
+			}//for
+			
+			for (int packetId: packetsToRemove) {
+				el.remove(packetId);
+			}//for
+		}//for
+	}//deleteProcessedEvents
+	
+	/**
+	 * Reads the number of Lines in the tracefile
+	 * @return
+	 */
+	private int readNumberOfLines() {
+		//Count lines
+		int lines = 0;
+		try {
+			while (bReader.readLine() != null) {
+				lines++;
+			}//while
+			bReader.close();
+			fStream.close();
+			
+			fStream = new FileInputStream(this.outputFile);
+			bReader = new BufferedReader(new InputStreamReader(fStream));
+			return lines;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return -1;
+		}//catch
+		//System.out.printf("Total file size to read (in bytes) : %d\n", fStream.available());
+	}//readNumberOfLines
+	
 	/**
 	 * Updates some statistics. Is called when a new event is written to file
 	 * Can only update statistics when the events are also added to the corresponding event lists.
@@ -446,7 +507,7 @@ public class Statistics implements Observer {
 		printQueueStatistics();
 		calculateDelayStatistics(Statistics.DEFAULT_DELAY);
 		printDelayStatistics();
-		printSimulationAnalysis();
+		//printSimulationAnalysis();
 		
 	}//printStatistics
 	
