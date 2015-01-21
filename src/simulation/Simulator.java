@@ -25,16 +25,16 @@ public class Simulator implements Observer{
 	private static int DEFAULT_SERVER_QUEUE_SIZE 		= 1000000;
 	
 	//Private Members
-	private final int clientSendInterval;
-	private final int clientSendMinInterval;
-	private final int clientSendMaxInterval;
-	private final int clientNumPackets;
-	private final int numClients;
-	private final int numPriorityClients;
-	private final int serverRuntime; //seconds
-	private final int serverSendSpeed; //Mbs
-	private final long micSecondsPerPacket;	//ca. 122 µs/Packet
-	private final int serverQueueSize;
+	private int clientSendInterval;
+	private int clientSendMinInterval;
+	private int clientSendMaxInterval;
+	private int clientNumPackets;
+	private int numClients;
+	private int numPriorityClients;
+	private int serverRuntime; //seconds
+	private int serverSendSpeed; //Mbs
+	private long micSecondsPerPacket;	//ca. 122 µs/Packet
+	private int serverQueueSize;
 	
 	//private final Simulation simulation = null;
 	private final Statistics stats;
@@ -43,7 +43,7 @@ public class Simulator implements Observer{
 	private boolean started;
 	
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
-	// Constructors	
+	// Constructors
 	
 	Simulator(String file){
 		this(DEFAULT_CLIENT_SEND_INTERVAL, DEFAULT_CLIENT_SEND_MIN_INTERVAL, DEFAULT_CLIENT_SEND_MAX_INTERVAL,
@@ -83,16 +83,16 @@ public class Simulator implements Observer{
 	
 	Simulator(int clientSendInterval, int clientSendMinInterval, int clientSendMaxInterval, int clientNumPackets, int numClients, int numPriorityClients,
 			  int serverRuntime, int serverSendSpeed, int serverQueueSize, String file){
-		this.clientSendInterval = clientSendInterval;
-		this.clientSendMinInterval = clientSendMinInterval;
-		this.clientSendMaxInterval = clientSendMaxInterval;
-		this.clientNumPackets = clientNumPackets;
-		this.numClients = numClients;
-		this.numPriorityClients = numPriorityClients;
-		this.serverRuntime = serverRuntime;
-		this.serverSendSpeed = serverSendSpeed;
-		this.micSecondsPerPacket = PACKET_SIZE_BITS/serverSendSpeed;
-		this.serverQueueSize = serverQueueSize;
+		this.setClientSendInterval(clientSendInterval);
+		this.setClientSendMinInterval(clientSendMinInterval);
+		this.setClientSendMaxInterval(clientSendMaxInterval);
+		this.setClientNumPackets(clientNumPackets);
+		this.setNumClients(numClients);
+		this.setNumPriorityClients(numPriorityClients);
+		this.setServerRuntime(serverRuntime);
+		this.setServerSendSpeed(serverSendSpeed);
+		this.setMicSecondsPerPacket(PACKET_SIZE_BITS/serverSendSpeed);
+		this.setServerQueueSize(serverQueueSize);
 		this.file = file;
 		this.stats = new Statistics(file);
 		this.running = false;
@@ -260,5 +260,45 @@ public class Simulator implements Observer{
 		str += "\tServer Queue Size: " 				+ getServerQueueSize() 		 + "\n";
 		
 		return str;
+	}
+
+	public void setClientSendInterval(int clientSendInterval) {
+		this.clientSendInterval = clientSendInterval;
+	}
+
+	public void setClientSendMinInterval(int clientSendMinInterval) {
+		this.clientSendMinInterval = clientSendMinInterval;
+	}
+
+	public void setClientSendMaxInterval(int clientSendMaxInterval) {
+		this.clientSendMaxInterval = clientSendMaxInterval;
+	}
+
+	public void setClientNumPackets(int clientNumPackets) {
+		this.clientNumPackets = clientNumPackets;
+	}
+
+	public void setNumClients(int numClients) {
+		this.numClients = numClients;
+	}
+
+	public void setNumPriorityClients(int numPriorityClients) {
+		this.numPriorityClients = numPriorityClients;
+	}
+
+	public void setServerRuntime(int serverRuntime) {
+		this.serverRuntime = serverRuntime;
+	}
+
+	public void setServerSendSpeed(int serverSendSpeed) {
+		this.serverSendSpeed = serverSendSpeed;
+	}
+
+	public void setMicSecondsPerPacket(long micSecondsPerPacket) {
+		this.micSecondsPerPacket = micSecondsPerPacket;
+	}
+
+	public void setServerQueueSize(int serverQueueSize) {
+		this.serverQueueSize = serverQueueSize;
 	}
 }
