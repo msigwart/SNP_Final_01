@@ -152,15 +152,15 @@ public class Statistics implements Observer {
 		int lines = 0;
 		
 		try {
-			int progressStep;
-			int nextProgress;
-			int progressCounter;
+//			int progressStep;
+//			int nextProgress;
+//			int progressCounter;
 			
 			
 			//Calculate progress display
-			progressStep = numOfLines/100;
-			nextProgress = progressStep;
-			progressCounter = 0;
+//			progressStep = numOfLines/100;
+//			nextProgress = progressStep;
+//			progressCounter = 0;
 			
 			System.out.printf("Reading tracefile...\n");
 			for (int i=0; i<numOfLines; i++) {
@@ -210,10 +210,8 @@ public class Statistics implements Observer {
 			}//for
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			return lines;
-		}//finally
-			
+		}
+		return lines;	
 			
 	}//readEventsFromFile
 	
@@ -319,6 +317,7 @@ public class Statistics implements Observer {
 				}//for
 				System.out.printf("Delete processed events.\n");
 				updateAvrgQueueTime();
+				calculateDelayStatistics(DEFAULT_DELAY);			//TODO Support multiple delay counts
 				deleteProcessedEvents();
 				
 				System.out.printf("Deleted processed events.\n");
@@ -425,8 +424,8 @@ public class Statistics implements Observer {
 	
 	private void calculateDelayStatistics(double delay) {
 		this.delay = delay;
-		this.totalDelayed	= 0;
-		this.percTotalDelayed = 0;
+		//this.totalDelayed	= 0;
+		//this.percTotalDelayed = 0;
 		
 		for (Priority p: Priority.values()) {
 			eventLists.get(p).calculateDelayedCount(delay);

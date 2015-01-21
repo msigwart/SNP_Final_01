@@ -299,8 +299,8 @@ public class EventList {
 	}//updateAvrgQueueTimes
 	
 	public void calculateDelayedCount(double delay) {
-		this.countDelayed 	= 0;
-		this.percentDelayed = 0.0;
+		//this.countDelayed 	= 0;
+		//this.percentDelayed = 0.0;
 		double newPercDelayed = 0.0;
 		for (long qTime: queueTimes) {
 			if ((qTime/Time.NANOSEC_PER_MICROSEC) > delay) {	//update delayed count
