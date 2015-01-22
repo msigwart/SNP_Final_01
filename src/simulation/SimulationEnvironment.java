@@ -32,7 +32,7 @@ public class SimulationEnvironment {
 		
 		for(int i = 0; i < runs; i++){
 			simulators.add(new Simulator("output/output_" + i + ".txt"));
-			setSimulatorOptions(simulators.get(i));
+			setSimulatorOptions(simulators.get(i), i+1);
 		}//for
 		
 		for(int i = 0; i < runs;){
@@ -57,23 +57,23 @@ public class SimulationEnvironment {
 		
 	}//main
 
-	private static void setSimulatorOptions(Simulator simulator)
+	private static void setSimulatorOptions(Simulator simulator, int simulatorIndex)
 	{
 		Scanner sc = new Scanner(System.in);
 
 		while(true){
-			System.out.println("--SIMULATOR OPTIONS--");
+			System.out.println("--SIMULATOR " + simulatorIndex + "OPTIONS--");
 			System.out.println("[1] - Client options");
 			System.out.println("[2] - Server options");
 			System.out.println("[3] - Default options");
-
+			System.out.print("Select option:");
 			int op = sc.nextInt();
 			switch(op){
 				case 1: // Client options
 					while(op != 0)
 					{
 						System.out.println("[1] - Send interval\n[2] - Send min interval\n[3] - Send max interval");
-						System.out.println("[4] - Nº of packets\n[5] - Nº of clients\n[6] - Nº priority clients\n[0] - Return");
+						System.out.println("[4] - No. of packets\n[5] - No. of clients\n[6] - No. priority clients\n[0] - Return");
 
 						op = sc.nextInt();
 
@@ -99,19 +99,19 @@ public class SimulationEnvironment {
 									simulator.setClientSendMaxInterval(v);
 								break;
 							case 4:
-								System.out.println("Put a value for nº packets: ");
+								System.out.println("Put a value for number of packets: ");
 								v = sc.nextInt();
 								if(v>0)
 									simulator.setClientNumPackets(v);
 								break;
 							case 5:
-								System.out.println("Put a value for nº clients: ");
+								System.out.println("Put a value for number of clients: ");
 								v = sc.nextInt();
 								if(v>0)
 									simulator.setNumClients(v);
 								break;
 							case 6:
-								System.out.println("Put a value for nº priority clients: ");
+								System.out.println("Put a value for non priority clients: ");
 								v = sc.nextInt();
 								if(v>0)
 									simulator.setNumPriorityClients(v);
@@ -151,7 +151,7 @@ public class SimulationEnvironment {
 									simulator.setServerQueueSize(v);
 								break;
 							case 4:
-								System.out.println("Put a value for µs/Packet: ");
+								System.out.println("Put a value for �s/Packet: ");
 								long vv = sc.nextLong();
 								if (vv > 0)
 									simulator.setMicSecondsPerPacket(vv);
