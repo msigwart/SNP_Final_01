@@ -170,7 +170,7 @@ public class Statistics implements Observer {
 					System.out.printf("END OF FILE\n");
 					return lines;
 				}//if
-				Event e = this.createEventFromString(line);
+				Event e = Event.createEventFromString(line);
 				if (e == null) {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
@@ -216,44 +216,7 @@ public class Statistics implements Observer {
 	}//readEventsFromFile
 	
 	
-	/**TODO--> Belongs into class Event??
-	 * Creates an event from a specified string line
-	 * @param strEvent the string line
-	 * @return the created Event object
-	 */
-	private Event createEventFromString(String strEvent){
-		int eventType;
-		Priority packetPriority;
-		
-		if( strEvent.toLowerCase().contains("DEQUEUE".toLowerCase()) ) {
-			eventType = Event.EVENT_TYPE_DEQUEUE;
-		}//if
-		else if ( strEvent.toLowerCase().contains("ENQUEUE".toLowerCase()) ) {
-			eventType = Event.EVENT_TYPE_ENQUEUE;
-		} else {
-			eventType = Event.EVENT_TYPE_UNKNOWN;
-		}//if
-		
-		
-		if ( strEvent.toLowerCase().contains("PACKET_PRIORITY_HIGH".toLowerCase()) ) {
-			packetPriority = Priority.PACKET_PRIORITY_HIGH;
-		} 
-		else {
-			packetPriority = Priority.PACKET_PRIORITY_LOW;
-		}//if
-		
-		
-		String []newDigits = (strEvent.replaceAll("[^0-9. ]", "")).split(" ",-1); //removes non numeric chars and slipts the String 
-		ArrayList <String> parts = new ArrayList<String>();
-		
-		for(int i = 0; i < newDigits.length; i++){
-			if(!newDigits[i].isEmpty()) // if the string is not empty adds a new digit to the array of parts
-				parts.add(newDigits[i]);
-		}//for
 
-		return new Event( eventType, Long.parseLong(parts.get(0)), new Packet( Integer.parseInt(parts.get(1)), packetPriority ) );
-		
-	}//addEventFromString
 
 	
 	

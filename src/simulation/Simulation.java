@@ -20,7 +20,7 @@ public class Simulation {
 	public static final int CLIENT_SEND_INTERVAL 		= 100; //microseconds
 	public static final int CLIENT_SEND_MIN_INTERVAL	= 40;
 	public static final int CLIENT_SEND_MAX_INTERVAL	= 2440;
-	public static final int CLIENT_NUM_OF_PACKETS 		= 100000;
+	public static final int CLIENT_NUM_OF_PACKETS 		= 1000000;
 	public static final int NUM_OF_CLIENTS				= 10;
 	public static final int NUM_OF_PRIORITY_CLIENTS		= 3;
 	
