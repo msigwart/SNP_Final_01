@@ -192,7 +192,6 @@ public class SendConnection extends Observable implements Runnable {
 	 * 		   false if a packet could not be enqueued --> Queue full?
 	 */
 	public boolean enqueuePacket(Packet packet, Priority priority) {
-		//System.out.printf("SendConnection: received packet %d\n", packet.getId());		//TODO: Output message in calls not in declaration
 		boolean success = false;
 		long arrivalTime = System.nanoTime();
 		Event event = new Event(Event.EVENT_TYPE_ENQUEUE, arrivalTime, packet);
@@ -226,7 +225,6 @@ public class SendConnection extends Observable implements Runnable {
 			packet = queues.get(priority).remove();
 			event = new Event(Event.EVENT_TYPE_DEQUEUE, departureTime, packet);
 			stats.triggerEvent(event);
-			//System.out.printf("SendConnection: Sending packet %d\n", packet.getId()); //TODO: Output message in calls not in declaration
 
 			return packet;
 		} catch (NoSuchElementException e) {
