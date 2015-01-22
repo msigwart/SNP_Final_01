@@ -17,24 +17,31 @@ public class EventList {
 	private long 			 				avrgQueueTime;			// average queuing time in nanoseconds
 	private int 			 				enqueueEventCount;
 	private int 			 				dequeueEventCount;
-	private int 			 				countDelayed;
+	/*private int 			 				countDelayed;
 	private double 			 				percentDelayed;
+	*/
 	private boolean							hasAverage;
 	
-	
+	private Map<Integer, DelayStat>			delayStatistics;
+
 
 
 
 	public EventList(Priority p) {
+		this.priority			= p;
 		this.events 			= new HashMap<Integer, ArrayList<Event>>();
 		this.queueTimes			= new ArrayList<Long>();
 		this.avrgQueueTime 		= 0L;
+		this.hasAverage			= false;
+
 		this.enqueueEventCount 	= 0;
 		this.dequeueEventCount 	= 0;
-		this.countDelayed		= 0;
-		this.percentDelayed		= 0.0;
-		this.hasAverage			= false;
-		this.priority			= p;
+		
+//		this.countDelayed		= 0;
+//		this.percentDelayed		= 0.0;
+		this.delayStatistics	= new HashMap<Integer, DelayStat>();
+
+
 	}//Constructor
 
 
@@ -73,15 +80,28 @@ public class EventList {
 		return dequeueEventCount;
 	}//getDequeueEventCount
 	
+	public Map<Integer, DelayStat> getDelayStatistics() {
+		return delayStatistics;
+	}//getDelayStatistics
+	
 
-	public int getCountDelayed() {
+	/*public int getCountDelayed() {		// TODO wont be necessary
 		return countDelayed;
 	}//getCountDelayed
-
-	public double getPercentDelayed() {
+	 */
+	/*public double getPercentDelayed() {		//TODO delete
 		return percentDelayed;
 	}//getPercentDelayed
+	*/
 	
+	
+	public double getPercentDelayed(int delay) {
+		return this.delayStatistics.get(delay).getPercentDelayed();
+	}//getPercentDelayed
+	
+	public int getDelayedCount(int delay) {
+		return this.delayStatistics.get(delay).getCountDelayed();
+	}//getDelayedCount
 	
 	
 	public boolean isAverageSet() {
@@ -115,13 +135,18 @@ public class EventList {
 		this.dequeueEventCount++;
 	}//incDequeueEventCount
 
-	public void incCountDelayed() {
-		this.countDelayed++;
+	/*public void addCountDelayed(int delay, int delayCount) {
+		this.delayStatistics.get(delay).addDelayCount(delayCount);
+		//this.countDelayed++;
 	}//incCountDelayed
-
-	public void setPercentDelayed(double percentDelayed) {
-		this.percentDelayed = percentDelayed;
-	}//setPercentDelayed
+*/
+//	public void setPercentDelayed(double percentDelayed) {
+//		this.percentDelayed = percentDelayed;
+//	}//setPercentDelayed
+	
+//	public void setPercentDelayed(int delay, double percentDelayed) {
+//		this.delayStatistics.get(delay).setPercDelayed(percentDelayed);
+//	}//setPercentDelayed
 	
 
 	
@@ -287,28 +312,34 @@ public class EventList {
 			setAvrgQueueTime(newAvrgTime);
 			//System.out.printf("%s new average: %d\n", event.getPacket().getPriority(), newAvrgTime);
 		}//if
-					
-//					if ((queueTime/Time.NANOSEC_PER_MICROSEC) > Statistics.DEFAULT_DELAY) {	//update delayed count
-//						incCountDelayed();
-//						newPercDelayed = (double)getCountDelayed()/getDequeueEventCount();
-//						setPercentDelayed(newPercDelayed);
-//						//percAllDelayed = (double)(countPrioDelayed+countNonPrioDelayed)/(deEventsPrio+deEventsNonPrio);	//TODO update!!!
-//					}//if
 
 		
 	}//updateAvrgQueueTimes
 	
-	public void calculateDelayedCount(double delay) {
-		//this.countDelayed 	= 0;
-		//this.percentDelayed = 0.0;
+
+	
+	/**
+	 * 
+	 * @param delay
+	 * @return returns the number of packets with a delay of the specified delay
+	 */
+	public int calculateDelayedCount(int delay) {
+
+		int countDelayed = 0;
 		double newPercDelayed = 0.0;
 		for (long qTime: queueTimes) {
 			if ((qTime/Time.NANOSEC_PER_MICROSEC) > delay) {	//update delayed count
-				incCountDelayed();
+				countDelayed++;
 			}//if
 		}//for
-		newPercDelayed = (double)countDelayed/dequeueEventCount;
-		setPercentDelayed(newPercDelayed);
+//		System.out.printf("Queue %s: Delay %d: OLD Count: %d\n", priority, delay, delayStatistics.get(delay).getCountDelayed());
+		delayStatistics.get(delay).addDelayCount(countDelayed);
+//		System.out.printf("Queue %s: Delay %d: NEW Count: %d\n", priority, delay, delayStatistics.get(delay).getCountDelayed());
+
+		newPercDelayed = (double)delayStatistics.get(delay).getCountDelayed()/dequeueEventCount;
+		delayStatistics.get(delay).setPercentDelayed(newPercDelayed);
+		
+		return delayStatistics.get(delay).getCountDelayed();
 	}//calculateDelayedCount
 	
 	

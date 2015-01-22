@@ -2,10 +2,10 @@ package statistics;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.beans.EventSetDescriptor;
 import java.io.*;
 
 
@@ -26,7 +26,7 @@ import simulation.Time;
  */
 public class Statistics implements Observer {
 	
-	public static final double DEFAULT_DELAY = 200;//Microseconds
+	public static final int DEFAULT_DELAY = 200;//Microseconds
 	
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 // Fields for file I/O
@@ -40,14 +40,20 @@ public class Statistics implements Observer {
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%		
 // Different statistics fields
 	
-	private EnumMap<Priority, EventList> eventLists;
+	private EnumMap<Priority, EventList> 	eventLists;
 	
 	private int 	totalEnEvents;
 	private int		totalDeEvents;
 	private double 	averageQueueTime;		//in nanoseconds
-	private double	delay;
+	/*private double	delay;
 	private double 	percTotalDelayed;
 	private int		totalDelayed;
+	*/
+	
+	private Map<Integer, DelayStat> totalDelayStats;
+	
+
+	
 	
 
 	
@@ -64,14 +70,22 @@ public class Statistics implements Observer {
 		for (Priority p: Priority.values()) {
 			this.eventLists.put(p, new EventList(p));
 		}//for
+		
 		this.totalEnEvents			= 0;
 		this.totalDeEvents			= 0;
-		this.delay					= DEFAULT_DELAY;
+		/*this.delay					= DEFAULT_DELAY;
 		this.percTotalDelayed		= 0.0;
 		this.totalDelayed			= 0;
+		*/
 		this.averageQueueTime		= 0.0;
 		
+		this.totalDelayStats		= new HashMap<Integer, DelayStat>();
+		
 		initializeStatistics();
+		initDelayStatistics(DEFAULT_DELAY);
+		initDelayStatistics((int)(Simulation.MICSECONDS_PER_PACKET*1.1));
+		initDelayStatistics((int)(Simulation.MICSECONDS_PER_PACKET*1.5));
+		initDelayStatistics(Simulation.MICSECONDS_PER_PACKET*4);
 	}//Constructor
 	
 	
@@ -106,6 +120,19 @@ public class Statistics implements Observer {
 		}//catch
 		
 	}//initializeStatistics
+	
+	
+	public void initDelayStatistics(int delay) {
+		if (!totalDelayStats.containsKey(delay)) {		// no total delay statistic for this delay has been initialized
+			totalDelayStats.put(delay, new DelayStat(delay));
+		}//if
+		
+		for (Priority p: Priority.values()) {
+			if (!eventLists.get(p).getDelayStatistics().containsKey(delay)) {	// no delay statistic for this delay has been initialized
+				eventLists.get(p).getDelayStatistics().put(delay, new DelayStat(delay));
+			}//if
+		}//for
+	}//initDelayStatistics
 	
 
 
@@ -152,15 +179,7 @@ public class Statistics implements Observer {
 		int lines = 0;
 		
 		try {
-//			int progressStep;
-//			int nextProgress;
-//			int progressCounter;
-			
-			
-			//Calculate progress display
-//			progressStep = numOfLines/100;
-//			nextProgress = progressStep;
-//			progressCounter = 0;
+
 			
 			System.out.printf("Reading tracefile...\n");
 			for (int i=0; i<numOfLines; i++) {
@@ -170,7 +189,7 @@ public class Statistics implements Observer {
 					System.out.printf("END OF FILE\n");
 					return lines;
 				}//if
-				Event e = this.createEventFromString(line);
+				Event e = Event.createEventFromString(line);
 				if (e == null) {
 					System.out.printf("Statistics: Could not read event from line --> \"%s\"", line);
 				}//if
@@ -202,10 +221,7 @@ public class Statistics implements Observer {
 						return lines;
 					}//catch
 				}//else
-				/*if (i >= nextProgress) {
-					System.out.printf("%d Percent...\n", progressCounter++);
-					nextProgress += progressStep;
-				}//if*/
+
 				lines++;
 			}//for
 		} catch (IOException e) {
@@ -216,44 +232,7 @@ public class Statistics implements Observer {
 	}//readEventsFromFile
 	
 	
-	/**TODO--> Belongs into class Event??
-	 * Creates an event from a specified string line
-	 * @param strEvent the string line
-	 * @return the created Event object
-	 */
-	private Event createEventFromString(String strEvent){
-		int eventType;
-		Priority packetPriority;
-		
-		if( strEvent.toLowerCase().contains("DEQUEUE".toLowerCase()) ) {
-			eventType = Event.EVENT_TYPE_DEQUEUE;
-		}//if
-		else if ( strEvent.toLowerCase().contains("ENQUEUE".toLowerCase()) ) {
-			eventType = Event.EVENT_TYPE_ENQUEUE;
-		} else {
-			eventType = Event.EVENT_TYPE_UNKNOWN;
-		}//if
-		
-		
-		if ( strEvent.toLowerCase().contains("PACKET_PRIORITY_HIGH".toLowerCase()) ) {
-			packetPriority = Priority.PACKET_PRIORITY_HIGH;
-		} 
-		else {
-			packetPriority = Priority.PACKET_PRIORITY_LOW;
-		}//if
-		
-		
-		String []newDigits = (strEvent.replaceAll("[^0-9. ]", "")).split(" ",-1); //removes non numeric chars and slipts the String 
-		ArrayList <String> parts = new ArrayList<String>();
-		
-		for(int i = 0; i < newDigits.length; i++){
-			if(!newDigits[i].isEmpty()) // if the string is not empty adds a new digit to the array of parts
-				parts.add(newDigits[i]);
-		}//for
 
-		return new Event( eventType, Long.parseLong(parts.get(0)), new Packet( Integer.parseInt(parts.get(1)), packetPriority ) );
-		
-	}//addEventFromString
 
 	
 	
@@ -300,6 +279,8 @@ public class Statistics implements Observer {
 				}//for
 			}//for
 			updateAvrgQueueTime();
+			updateDelayStatistics();
+
 		} else {
 			int eventsRead = 0;
 			int readCycle = 1;
@@ -315,12 +296,12 @@ public class Statistics implements Observer {
 						eventLists.get(p).addQueueTime(e.getKey());
 					}//for
 				}//for
-				System.out.printf("Delete processed events.\n");
 				updateAvrgQueueTime();
-				calculateDelayStatistics(DEFAULT_DELAY);			//TODO Support multiple delay counts
+				updateDelayStatistics();
+				
+				System.out.printf("Delete processed events.\n");
 				deleteProcessedEvents();
 				
-				System.out.printf("Deleted processed events.\n");
 				for (Priority p: Priority.values()) {
 					System.out.printf("%s events: %d\n", p, eventLists.get(p).size());
 				}//for
@@ -420,18 +401,24 @@ public class Statistics implements Observer {
 			}//if
 		}//for
 	}//updateAvrgQueueTime
+
 	
+	private void updateDelayStatistics() {
+		for (Map.Entry<Integer, DelayStat> entry: totalDelayStats.entrySet()) {
+			calculateDelayStatistics(entry.getKey());
+		}//for
+	}//updateDelayStastics
 	
-	private void calculateDelayStatistics(double delay) {
-		this.delay = delay;
-		//this.totalDelayed	= 0;
-		//this.percTotalDelayed = 0;
+	private void calculateDelayStatistics(int delay) {
+		int countDelayed = 0;
+		double percDelayed = 0.0;
 		
 		for (Priority p: Priority.values()) {
-			eventLists.get(p).calculateDelayedCount(delay);
-			this.totalDelayed += eventLists.get(p).getCountDelayed();
+			countDelayed += eventLists.get(p).calculateDelayedCount(delay);
+			totalDelayStats.get(delay).setDelayCount(countDelayed);
 		}//for
-		this.percTotalDelayed = (double)totalDelayed/totalDeEvents;
+		percDelayed = (double)totalDelayStats.get(delay).getCountDelayed()/totalDeEvents;
+		totalDelayStats.get(delay).setPercentDelayed(percDelayed);
 
 	}//calculateDelayStatistics
 
@@ -504,9 +491,9 @@ public class Statistics implements Observer {
 		System.out.printf("SendTime Server: %d µs/Packet --- %d ns/Packet\n", Simulation.MICSECONDS_PER_PACKET, Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC);
 		printEventStatistics();
 		printQueueStatistics();
-		calculateDelayStatistics(Statistics.DEFAULT_DELAY);
-		printDelayStatistics();
-		//printSimulationAnalysis();
+		updateDelayStatistics();
+		printDelayStatistics(DEFAULT_DELAY);
+		printSimulationAnalysis();
 		
 	}//printStatistics
 	
@@ -536,24 +523,29 @@ public class Statistics implements Observer {
 	}//printQueueStatistics
 	
 	
-	public void printDelayStatistics() {
+	public void printDelayStatistics(int delay) {
 		printStatTitle("Packet Count:");
-		System.out.printf("Packets with delay of %7.2f microseconds:\n", this.delay);
+		System.out.printf("Packets with delay of %9d microseconds:\n", delay);
 		
 		System.out.printf("\n\t\t\t Delayed:\t    Total:\t| Percentage:\n" +
 				"--------------------------------------------------------+-----------\n");
 		for (Priority p: Priority.values()) {
 
-			int countDelayed 	= eventLists.get(p).getCountDelayed();
+			int countDelayed 	= eventLists.get(p).getDelayStatistics().get(delay).getCountDelayed();
 			int deEvents		= eventLists.get(p).getDequeueEventCount();
-			double percDelayed 	= eventLists.get(p).getPercentDelayed();
-			System.out.printf("%s:\t%9d\t%9d\t| %9f\n", p, countDelayed, deEvents, percDelayed*100);
+			double percDelayed 	= eventLists.get(p).getDelayStatistics().get(delay).getPercentDelayed();
+			
+//			int countDelayed	= delayStatistics.get(delay).getCountDelayed();
+//			int deEvents		= eventLists.get(p).getDequeueEventCount();
+//			double percDelayed 	= eventLists.get(p).getPercentDelayed();
+
+			System.out.printf("%s:\t%9d\t%9d\t| %7.2f\n", p, countDelayed, deEvents, percDelayed*100);
 
 		}//for
-		System.out.printf("========================================================+===========\n" +		//TODO
-						  "Total Packets \t\t%9d\t%9d\t| %9f\n", totalDelayed, 
+		System.out.printf("========================================================+===========\n" +
+						  "Total Packets \t\t%9d\t%9d\t| %9f\n", totalDelayStats.get(delay).getCountDelayed(), 
 						  										totalDeEvents, 
-						  										percTotalDelayed*100);
+						  										totalDelayStats.get(delay).getPercentDelayed()*100);
 	}//printPacketStatistics
 	
 	
@@ -565,16 +557,13 @@ public class Statistics implements Observer {
 		System.out.printf("4.0 * M = %7.2f µs\n", Simulation.MICSECONDS_PER_PACKET*4.0);
 		
 		// 1.1 * M
-		calculateDelayStatistics(Simulation.MICSECONDS_PER_PACKET);
-		printDelayStatistics();
+		printDelayStatistics((int)(Simulation.MICSECONDS_PER_PACKET*1.1));
 		
 		// 1.5 * M
-		calculateDelayStatistics(Simulation.MICSECONDS_PER_PACKET*1.5);
-		printDelayStatistics();
+		printDelayStatistics((int)(Simulation.MICSECONDS_PER_PACKET*1.5));
 		
 		// 4.0 * M
-		calculateDelayStatistics(Simulation.MICSECONDS_PER_PACKET*4.0);
-		printDelayStatistics();
+		printDelayStatistics((int)(Simulation.MICSECONDS_PER_PACKET*4.0));
 		
 
 	}//printSimulationAnalysis
