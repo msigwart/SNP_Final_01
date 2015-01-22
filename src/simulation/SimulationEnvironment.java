@@ -125,7 +125,7 @@ public class SimulationEnvironment {
 				case 2: // server options
 					while(op != 0) {
 						System.out.println("[1] - Server runtime\n[2] - Send speed\n[3] - Server queue size");
-						System.out.println("[4] - ms per packet\n[0] - Return");
+						System.out.println("[0] - Return");
 
 						op = sc.nextInt();
 
@@ -150,12 +150,7 @@ public class SimulationEnvironment {
 								if (v > 0)
 									simulator.setServerQueueSize(v);
 								break;
-							case 4:
-								System.out.println("Put a value for µs/Packet: ");
-								long vv = sc.nextLong();
-								if (vv > 0)
-									simulator.setMicSecondsPerPacket(vv);
-								break;
+
 							default:
 								break;
 						}
