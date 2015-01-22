@@ -62,7 +62,7 @@ public class SimulationEnvironment {
 		Scanner sc = new Scanner(System.in);
 
 		while(true){
-			System.out.println("--SIMULATOR " + simulatorIndex + "OPTIONS--");
+			System.out.println("--SIMULATOR " + simulatorIndex + " OPTIONS--");
 			System.out.println("[1] - Client options");
 			System.out.println("[2] - Server options");
 			System.out.println("[3] - Default options");
