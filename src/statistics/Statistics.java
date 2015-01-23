@@ -85,7 +85,7 @@ public class Statistics implements Observer {
 		initDelayStatistics(DEFAULT_DELAY);
 		initDelayStatistics((int)(Simulation.MICSECONDS_PER_PACKET*1.1));
 		initDelayStatistics((int)(Simulation.MICSECONDS_PER_PACKET*1.5));
-		initDelayStatistics(Simulation.MICSECONDS_PER_PACKET*4);
+		initDelayStatistics((int)(Simulation.MICSECONDS_PER_PACKET*4));
 	}//Constructor
 	
 	
@@ -488,7 +488,7 @@ public class Statistics implements Observer {
 	public void printStatistics() {
 		
 		System.out.printf("\n############### Statistics ##########################################\n");
-		System.out.printf("SendTime Server: %d µs/Packet --- %d ns/Packet\n", Simulation.MICSECONDS_PER_PACKET, Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC);
+		System.out.printf("SendTime Server: %7.2f µs/Packet --- %7.2f ns/Packet\n", Simulation.MICSECONDS_PER_PACKET, Simulation.MICSECONDS_PER_PACKET*Time.NANOSEC_PER_MICROSEC);
 		printEventStatistics();
 		printQueueStatistics();
 		updateDelayStatistics();

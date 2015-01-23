@@ -81,8 +81,9 @@ public class Client extends Thread implements Observer {
 	 */
 	public void run() {
 		if (Thread.currentThread() != this) throw new IllegalStateException();
-		System.out.printf("Client %d started...\n", this.clientId);
 
+		int startDelay = rig.generateNewRandomInterval();
+		
 		while (running) {
 			
 			if (sendConnection != null) {				//wait for connection to sender
@@ -95,8 +96,15 @@ public class Client extends Thread implements Observer {
 				interval = rig.generateNewRandomInterval();
 				//System.out.printf("Client: new Interval: %d\n", interval);
 				
+				do {
+					newTime = System.nanoTime();
+				} while (newTime - startTime < startDelay*Time.NANOSEC_PER_MICROSEC);
+				
+				System.out.printf("Client %d started...\n", this.clientId);
+
 				while (packetCounter<numOfPackets && running == true) {	//send number of Packets
 					newTime = System.nanoTime();	//get currentTime
+					
 					
 					if ( (newTime - currentTime) >= (interval*Time.NANOSEC_PER_MICROSEC) ) {	//TODO --> Check for long repetition	
 						
